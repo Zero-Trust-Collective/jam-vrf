@@ -1,0 +1,21 @@
+[package]
+name = "cryptography"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "cryptography"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+ark-ec-vrfs ={ git = "https://github.com/davxy/ark-ec-vrfs", rev = "d90e180", features = ["bandersnatch", "ring"] }
+ark-ff = "0.4"
+ark-ec = "0.4"
+ark-std = "0.4"
+ark-serialize = "0.4"
+ark-ed-on-bls12-381-bandersnatch = "0.4"
+pyo3 = { version = "0.19" }
+
+[features]
+extension-module = ["pyo3/extension-module"]
+default = ["extension-module"]

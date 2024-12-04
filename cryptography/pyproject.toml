@@ -1,0 +1,29 @@
+[project]
+name = "cryptography"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: Implementation :: CPython"
+]
+
+[tool.poetry]
+name = "cryptography"
+version = "0.1.0"
+description = "This is a bindings module for exposing ark-ec-vrfs bandersnatch cryptography operations to a JAM python client"
+authors = ["0trust3r"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+maturin = "^1.7.7"
+pytest = "^8.3.4"
+pdoc = "^15.0.0"
+pytest-profiling = "^1.7.0"
+pytest-xdist = "^3.6.1"
+
+[tool.poetry.group.dev.dependencies]
+maturin = "^1.7.7"
+
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
