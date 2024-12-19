@@ -1,14 +1,14 @@
 """Tests for VRF functionality in the cryptography module.
 
-This module contains tests for both FallbackVRF and RingVRF classes,
+This module contains tests for both SingleVRF and RingVRF classes,
 verifying their sign/verify functionality works as expected.
 """
 
 import pytest
-from cryptography import KeyPairVRF, FallbackVRF, RingVRF
+from cryptography import KeyPairVRF, SingleVRF, RingVRF
 
 def test_fallback_vrf_proof_output_bytes():
-    """Test accessing proof and output bytes from FallbackVRFOutput.
+    """Test accessing proof and output bytes from SingleVRFOutput.
     
     This test verifies that:
     1. proof_bytes() returns non-empty bytes
@@ -19,7 +19,7 @@ def test_fallback_vrf_proof_output_bytes():
     message = b"test message"
     ad = b"additional data"
     
-    fallback_vrf = FallbackVRF()
+    fallback_vrf = SingleVRF()
     proof_and_output = fallback_vrf.prove(key_pair, message, ad)
     
     # Test proof bytes
@@ -72,12 +72,12 @@ def test_ring_vrf_proof_output_bytes():
     assert proof_and_output.output_bytes() == output_bytes
 
 def test_fallback_vrf_sign_verify():
-    """Test FallbackVRF sign and verify functionality.
+    """Test SingleVRF sign and verify functionality.
     
     This test:
     1. Creates a new key pair
-    2. Signs a message using FallbackVRF.prove
-    3. Verifies the signature using FallbackVRF.verify
+    2. Signs a message using SingleVRF.prove
+    3. Verifies the signature using SingleVRF.verify
     """
     # Create key pair
     key_pair = KeyPairVRF()
@@ -87,7 +87,7 @@ def test_fallback_vrf_sign_verify():
     ad = b"additional data"
     
     # Get proof and output using prove
-    fallback_vrf = FallbackVRF()
+    fallback_vrf = SingleVRF()
     proof_and_output = fallback_vrf.prove(key_pair, message, ad)
     
     # Get public key bytes
@@ -189,7 +189,7 @@ def test_ring_vrf_invalid_index():
         ring_vrf.verify(ring_public_keys, message, ad, proof_and_output)
 
 def test_fallback_vrf_different_message():
-    """Test FallbackVRF verify fails with different message.
+    """Test SingleVRF verify fails with different message.
     
     This test verifies that the verification fails when trying to verify
     a signature with a different message than what was signed.
@@ -202,7 +202,7 @@ def test_fallback_vrf_different_message():
     ad = b"additional data"
     
     # Get proof and output using prove
-    fallback_vrf = FallbackVRF()
+    fallback_vrf = SingleVRF()
     proof_and_output = fallback_vrf.prove(key_pair, message, ad)
     
     # Get public key bytes
@@ -265,7 +265,7 @@ def test_ring_vrf_invalid_ring():
         ring_vrf.prove(key_pair, empty_ring, 0, message, ad)
 
 def test_fallback_vrf_different_ad():
-    """Test FallbackVRF verify fails with different additional data.
+    """Test SingleVRF verify fails with different additional data.
     
     This test verifies that the verification fails when trying to verify
     a signature with different additional data than what was used for signing.
@@ -274,7 +274,7 @@ def test_fallback_vrf_different_ad():
     message = b"test message"
     ad = b"original ad"
     
-    fallback_vrf = FallbackVRF()
+    fallback_vrf = SingleVRF()
     proof_and_output = fallback_vrf.prove(key_pair, message, ad)
     public_key_bytes = key_pair.public_key_bytes()
     
@@ -386,9 +386,9 @@ def test_ring_vrf_duplicate_keys():
 
 def test_vrf_empty_message_and_ad():
     """Test both VRFs with empty message and additional data."""
-    # Test FallbackVRF
+    # Test SingleVRF
     key_pair = KeyPairVRF()
-    fallback_vrf = FallbackVRF()
+    fallback_vrf = SingleVRF()
     
     proof_and_output = fallback_vrf.prove(key_pair, b"", b"")
     result = fallback_vrf.verify(key_pair.public_key_bytes(), b"", b"", proof_and_output)
@@ -412,9 +412,9 @@ def test_vrf_large_message_and_ad():
     large_message = b"x" * 1000000  # 1MB message
     large_ad = b"y" * 1000000  # 1MB additional data
     
-    # Test FallbackVRF
+    # Test SingleVRF
     key_pair = KeyPairVRF()
-    fallback_vrf = FallbackVRF()
+    fallback_vrf = SingleVRF()
     
     proof_and_output = fallback_vrf.prove(key_pair, large_message, large_ad)
     result = fallback_vrf.verify(key_pair.public_key_bytes(), large_message, large_ad, proof_and_output)

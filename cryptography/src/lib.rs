@@ -73,13 +73,13 @@ impl From<CryptoError> for PyErr {
 
 /// VRF proof and output for single signatures
 #[pyclass]
-pub struct FallbackVRFOutput {
+pub struct SingleVRFOutput {
     proof: ietf::Proof<BandersnatchSha512Ell2>,
     output: Output<BandersnatchSha512Ell2>,
 }
 
 #[pymethods]
-impl FallbackVRFOutput {
+impl SingleVRFOutput {
     /// Get the serialized proof bytes
     fn proof_bytes<'py>(&self, py: Python<'py>) -> Result<&'py PyBytes, CryptoError> {
         let mut bytes = Vec::new();
@@ -149,10 +149,10 @@ impl KeyPairVRF {
 
 /// VRF operations for single signatures
 #[pyclass]
-pub struct FallbackVRF;
+pub struct SingleVRF;
 
 #[pymethods]
-impl FallbackVRF {
+impl SingleVRF {
     #[new]
     fn new() -> Self {
         Self
@@ -160,17 +160,17 @@ impl FallbackVRF {
 
     /// Generate VRF proof and output for a data using a key pair
     #[staticmethod]
-    fn prove(key_pair: &KeyPairVRF, data: &[u8], ad: &[u8]) -> Result<FallbackVRFOutput, CryptoError> {
+    fn prove(key_pair: &KeyPairVRF, data: &[u8], ad: &[u8]) -> Result<SingleVRFOutput, CryptoError> {
         let input = Input::new(data)
             .ok_or(CryptoError::InvalidInput("Failed to create VRF input from data".to_string()))?;
         let output = key_pair.secret.output(input);
         let proof = IetfProver::prove(&key_pair.secret, input, output, ad);
-        Ok(FallbackVRFOutput { proof, output })
+        Ok(SingleVRFOutput { proof, output })
     }
 
     /// Verify a VRF proof and output for a data using a public key
     #[staticmethod]
-    fn verify(public_key_bytes: &[u8], data: &[u8], ad: &[u8], vrf_outputs: &FallbackVRFOutput) -> Result<bool, CryptoError> {
+    fn verify(public_key_bytes: &[u8], data: &[u8], ad: &[u8], vrf_outputs: &SingleVRFOutput) -> Result<bool, CryptoError> {
         let public = Public::<BandersnatchSha512Ell2>::deserialize_uncompressed(&mut &public_key_bytes[..])
             .map_err(wrap_serialization_error)?;
         let input = Input::new(data)
@@ -272,9 +272,9 @@ impl RingVRF {
 #[pymodule]
 fn cryptography(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<KeyPairVRF>()?;
-    m.add_class::<FallbackVRFOutput>()?;
+    m.add_class::<SingleVRFOutput>()?;
     m.add_class::<RingVRFOutput>()?;
-    m.add_class::<FallbackVRF>()?;
+    m.add_class::<SingleVRF>()?;
     m.add_class::<RingVRF>()?;
     Ok(())
 }
@@ -294,12 +294,12 @@ mod tests {
         let ad = b"additional data";
 
         // Generate proof and output
-        let proof_and_output = FallbackVRF::prove(&key_pair, data, ad).unwrap();
+        let proof_and_output = SingleVRF::prove(&key_pair, data, ad).unwrap();
 
         // Verify proof
         Python::with_gil(|py| {
             let pk_bytes = key_pair.public_key_bytes(py).unwrap();
-            let result = FallbackVRF::verify(pk_bytes.as_bytes(), data, ad, &proof_and_output).unwrap();
+            let result = SingleVRF::verify(pk_bytes.as_bytes(), data, ad, &proof_and_output).unwrap();
             assert!(result);
         });
     }
