@@ -15,6 +15,7 @@ ark-std = "0.4"
 ark-serialize = "0.4"
 ark-ed-on-bls12-381-bandersnatch = "0.4"
 pyo3 = { version = "0.19" }
+hex = "0.4"
 
 [features]
 extension-module = ["pyo3/extension-module"]
