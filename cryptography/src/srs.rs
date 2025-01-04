@@ -18,7 +18,7 @@ pub fn get_pcs_params() -> ring::PcsParams<BandersnatchSha512Ell2> {
         let mut buf = Vec::new();
         file.read_to_end(&mut buf).expect("Failed to read SRS file");
         
-        ring::PcsParams::<BandersnatchSha512Ell2>::deserialize_uncompressed_unchecked(&mut &buf[..])
+        ring::PcsParams::<BandersnatchSha512Ell2>::deserialize_uncompressed(&mut &buf[..])
             .expect("Failed to deserialize SRS parameters")
     }).clone()
 }

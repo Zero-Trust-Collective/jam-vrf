@@ -2,7 +2,7 @@ use ark_ec_vrfs::{
     ietf::{self, Prover as IetfProver, Verifier as IetfVerifier},
     ring::{self, Prover as RingProver, Verifier as RingVerifier},
     suites::bandersnatch::edwards::BandersnatchSha512Ell2,
-    Input, Output, Public, Secret, Error as VrfError,
+    Input, Output, Public, Secret, Error as VrfError, AffinePoint,
 };
 use ark_serialize::{CanonicalDeserialize, CanonicalSerialize, SerializationError};
 use pyo3::prelude::*;
@@ -208,7 +208,7 @@ impl SingleVRF {
 /// VRF operations for ring signatures
 #[pyclass]
 pub struct RingVRF {
-    ring_public_keys: Vec<Public<BandersnatchSha512Ell2>>,
+    ring_public_keys: Vec<AffinePoint<BandersnatchSha512Ell2>>,
 }
 
 #[pymethods]
@@ -221,9 +221,9 @@ impl RingVRF {
         
         let mut parsed_keys = Vec::with_capacity(ring_public_keys.len());
         for pk_bytes in ring_public_keys {
-            let pk = Public::<BandersnatchSha512Ell2>::deserialize_compressed(&mut &pk_bytes[..])
+            let affine = <BandersnatchSha512Ell2 as ark_ec_vrfs::Suite>::Affine::deserialize_compressed(&mut &pk_bytes[..])
                 .map_err(wrap_serialization_error)?;
-            parsed_keys.push(pk);
+            parsed_keys.push(affine);
         }
         
         Ok(Self {
@@ -247,7 +247,7 @@ impl RingVRF {
         }
     
         let ring_ctx = get_ring_context(self.ring_public_keys.len())?;
-        let prover_key = ring_ctx.prover_key(&self.ring_public_keys.iter().map(|pk| pk.0).collect::<Vec<_>>());
+        let prover_key = ring_ctx.prover_key(&self.ring_public_keys);
         let prover = ring_ctx.prover(prover_key, ring_public_index.into());
 
         let output = key_pair.secret.output(input);
@@ -268,7 +268,7 @@ impl RingVRF {
             .ok_or_else(|| CryptoError::InvalidInput("Failed to create VRF input from data".to_string()))?;
 
         let ring_ctx = get_ring_context(self.ring_public_keys.len())?;
-        let verifier_key = ring_ctx.verifier_key(&self.ring_public_keys.iter().map(|pk| pk.0).collect::<Vec<_>>());
+        let verifier_key = ring_ctx.verifier_key(&self.ring_public_keys);
         let verifier = ring_ctx.verifier(verifier_key);
 
         <Public<BandersnatchSha512Ell2> as RingVerifier<BandersnatchSha512Ell2>>::verify(input, output.output, ad, &proof.proof, &verifier).map_err(wrap_vrf_error)?;
@@ -279,7 +279,7 @@ impl RingVRF {
     /// Generate bandersnatch root from stored ring public keys
     fn root<'py>(&self, py: Python<'py>) -> Result<Py<PyBytes>, CryptoError> {
         let ring_ctx = get_ring_context(self.ring_public_keys.len())?;
-        let verifier_key = ring_ctx.verifier_key(&self.ring_public_keys.iter().map(|pk| pk.0).collect::<Vec<_>>());
+        let verifier_key = ring_ctx.verifier_key(&self.ring_public_keys);
         let commitment = verifier_key.commitment();
 
         let mut bytes = Vec::new();
