@@ -14,7 +14,7 @@ ark-ec = "0.4"
 ark-std = "0.4"
 ark-serialize = "0.4"
 ark-ed-on-bls12-381-bandersnatch = "0.4"
-pyo3 = { version = "0.19" }
+pyo3 = { version = "0.23.3" }
 hex = "0.4"
 
 [features]

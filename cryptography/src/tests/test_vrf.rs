@@ -11,12 +11,12 @@ fn test_single_signature_vrf() {
     let ad = b"additional data";
 
     // Generate proof and output
-    let proof_and_output = SingleVRF::prove(&key_pair, data, ad).unwrap();
+    let (proof, output) = SingleVRF::prove(&key_pair, data, ad).unwrap();
 
     // Verify proof
     Python::with_gil(|py| {
         let pk_bytes = key_pair.public_key_bytes(py).unwrap();
-        let result = SingleVRF::verify(pk_bytes.as_bytes(), data, ad, &proof_and_output).unwrap();
+        let result = SingleVRF::verify(pk_bytes.as_bytes(py), data, ad, &proof, &output).unwrap();
         assert!(result);
     });
 }
@@ -36,24 +36,27 @@ fn test_ring_signature_vrf() {
         let pk2_bytes = key_pair2.public_key_bytes(py).unwrap();
         let pk3_bytes = key_pair3.public_key_bytes(py).unwrap();
 
-        let ring_public_keys = vec![
-            pk1_bytes.as_bytes(),
-            pk2_bytes.as_bytes(),
-            pk3_bytes.as_bytes(),
+        let ring_public_keys: Vec<Vec<u8>> = vec![
+            pk1_bytes.as_bytes(py).to_vec(),
+            pk2_bytes.as_bytes(py).to_vec(),
+            pk3_bytes.as_bytes(py).to_vec(),
         ];
 
         let data = b"test data";
         let ad = b"additional data";
 
+        // Create RingVRF instance with the ring public keys
+        let ring_vrf = RingVRF::new(ring_public_keys.clone()).unwrap();
+
         // Generate proof and output using first key pair
-        let proof_and_output = RingVRF::prove(&key_pair1, ring_public_keys.clone(), 0, data, ad).unwrap();
+        let (proof, output) = ring_vrf.prove(&key_pair1, 0, data, ad).unwrap();
 
         // Verify proof
-        let result = RingVRF::verify(ring_public_keys.clone(), data, ad, &proof_and_output).unwrap();
+        let result = ring_vrf.verify(data, ad, &proof, &output).unwrap();
         assert!(result);
 
-        // Test bandersnatch root generation
-        let root = RingVRF::bandersnatch_root(ring_public_keys).unwrap();
-        assert!(!root.as_ref(py).as_bytes().is_empty());
+        // Test root generation
+        let root = ring_vrf.root(py).unwrap();
+        assert!(!root.as_bytes(py).is_empty());
     });
 }

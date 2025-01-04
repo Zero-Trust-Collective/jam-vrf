@@ -82,55 +82,68 @@ fn get_ring_context(ring_size: usize) -> Result<ring::RingContext<BandersnatchSh
         .map_err(|_| CryptoError::InvalidInput("Failed to create ring context".to_string()))
 }
 
-/// VRF proof and output for single signatures
+/// VRF output type shared between single and ring VRF implementations
 #[pyclass]
-pub struct SingleVRFOutput {
+pub struct VRFOutput {
+    output: Output<BandersnatchSha512Ell2>,
+}
+
+#[pymethods]
+impl VRFOutput {
+    #[new]
+    fn new(bytes: &[u8]) -> Result<Self, CryptoError> {
+        let affine = <BandersnatchSha512Ell2 as ark_ec_vrfs::Suite>::Affine::deserialize_compressed(&mut &bytes[..])
+            .map_err(wrap_serialization_error)?;
+        Ok(Self {
+            output: Output::from(affine)
+        })
+    }
+
+    /// Get the serialized bytes
+    fn bytes<'py>(&self, py: Python<'py>) -> Result<Py<PyBytes>, CryptoError> {
+        let mut bytes = Vec::new();
+        self.output.serialize_uncompressed(&mut bytes)
+            .map_err(wrap_serialization_error)?;
+        Ok(PyBytes::new(py, &bytes).into())
+    }
+
+    /// Get the hash bytes
+    fn hash<'py>(&self, py: Python<'py>) -> Py<PyBytes> {
+        PyBytes::new(py, &self.output.hash()).into()
+    }
+}
+
+/// VRF proof for single signatures
+#[pyclass]
+pub struct SingleVRFProof {
     proof: ietf::Proof<BandersnatchSha512Ell2>,
-    output: Output<BandersnatchSha512Ell2>,
 }
 
 #[pymethods]
-impl SingleVRFOutput {
-    /// Get the serialized proof bytes
-    fn proof_bytes<'py>(&self, py: Python<'py>) -> Result<&'py PyBytes, CryptoError> {
+impl SingleVRFProof {
+    /// Get the serialized bytes
+    fn bytes<'py>(&self, py: Python<'py>) -> Result<Py<PyBytes>, CryptoError> {
         let mut bytes = Vec::new();
         self.proof.serialize_uncompressed(&mut bytes)
             .map_err(wrap_serialization_error)?;
-        Ok(PyBytes::new(py, &bytes))
-    }
-
-    /// Get the serialized output bytes
-    fn output_bytes<'py>(&self, py: Python<'py>) -> Result<&'py PyBytes, CryptoError> {
-        let mut bytes = Vec::new();
-        self.output.serialize_uncompressed(&mut bytes)
-            .map_err(wrap_serialization_error)?;
-        Ok(PyBytes::new(py, &bytes))
+        Ok(PyBytes::new(py, &bytes).into())
     }
 }
 
-/// VRF proof and output for ring signatures
+/// VRF proof for ring signatures
 #[pyclass]
-pub struct RingVRFOutput {
+pub struct RingVRFProof {
     proof: ring::Proof<BandersnatchSha512Ell2>,
-    output: Output<BandersnatchSha512Ell2>,
 }
 
 #[pymethods]
-impl RingVRFOutput {
-    /// Get the serialized proof bytes
-    fn proof_bytes<'py>(&self, py: Python<'py>) -> Result<&'py PyBytes, CryptoError> {
+impl RingVRFProof {
+    /// Get the serialized bytes
+    fn bytes<'py>(&self, py: Python<'py>) -> Result<Py<PyBytes>, CryptoError> {
         let mut bytes = Vec::new();
         self.proof.serialize_uncompressed(&mut bytes)
             .map_err(wrap_serialization_error)?;
-        Ok(PyBytes::new(py, &bytes))
-    }
-
-    /// Get the serialized output bytes
-    fn output_bytes<'py>(&self, py: Python<'py>) -> Result<&'py PyBytes, CryptoError> {
-        let mut bytes = Vec::new();
-        self.output.serialize_uncompressed(&mut bytes)
-            .map_err(wrap_serialization_error)?;
-        Ok(PyBytes::new(py, &bytes))
+        Ok(PyBytes::new(py, &bytes).into())
     }
 }
 
@@ -150,11 +163,11 @@ impl KeyPairVRF {
     }
 
     /// Get the serialized public key
-    fn public_key_bytes<'py>(&self, py: Python<'py>) -> Result<&'py PyBytes, CryptoError> {
+    fn public_key_bytes<'py>(&self, py: Python<'py>) -> Result<Py<PyBytes>, CryptoError> {
         let mut bytes = Vec::new();
         self.secret.public.0.serialize_compressed(&mut bytes)
             .map_err(wrap_serialization_error)?;
-        Ok(PyBytes::new(py, &bytes))
+        Ok(PyBytes::new(py, &bytes).into())
     }
 }
 
@@ -171,22 +184,22 @@ impl SingleVRF {
 
     /// Generate VRF proof and output for a data using a key pair
     #[staticmethod]
-    fn prove(key_pair: &KeyPairVRF, data: &[u8], ad: &[u8]) -> Result<SingleVRFOutput, CryptoError> {
+    fn prove(key_pair: &KeyPairVRF, data: &[u8], ad: &[u8]) -> Result<(SingleVRFProof, VRFOutput), CryptoError> {
         let input = Input::new(data)
             .ok_or(CryptoError::InvalidInput("Failed to create VRF input from data".to_string()))?;
         let output = key_pair.secret.output(input);
         let proof = IetfProver::prove(&key_pair.secret, input, output, ad);
-        Ok(SingleVRFOutput { proof, output })
+        Ok((SingleVRFProof { proof }, VRFOutput { output }))
     }
 
     /// Verify a VRF proof and output for a data using a public key
     #[staticmethod]
-    fn verify(public_key_bytes: &[u8], data: &[u8], ad: &[u8], vrf_outputs: &SingleVRFOutput) -> Result<bool, CryptoError> {
+    fn verify(public_key_bytes: &[u8], data: &[u8], ad: &[u8], proof: &SingleVRFProof, output: &VRFOutput) -> Result<bool, CryptoError> {
         let public = Public::<BandersnatchSha512Ell2>::deserialize_compressed(&mut &public_key_bytes[..])
             .map_err(wrap_serialization_error)?;
         let input = Input::new(data)
             .ok_or(CryptoError::InvalidInput("Failed to create VRF input from data".to_string()))?;
-        IetfVerifier::verify(&public, input, vrf_outputs.output, ad, &vrf_outputs.proof)
+        IetfVerifier::verify(&public, input, output.output, ad, &proof.proof)
         .map_err(wrap_vrf_error)?;
         Ok(true)
     }
@@ -194,116 +207,96 @@ impl SingleVRF {
 
 /// VRF operations for ring signatures
 #[pyclass]
-pub struct RingVRF;
+pub struct RingVRF {
+    ring_public_keys: Vec<Public<BandersnatchSha512Ell2>>,
+}
 
 #[pymethods]
 impl RingVRF {
     #[new]
-    fn new() -> Self {
-        Self
-    }
-
-    /// Generate VRF proof and output using a key pair and a ring of public keys
-    #[staticmethod]
-    fn prove(
-        key_pair: &KeyPairVRF,
-        ring_public_keys: Vec<&[u8]>,
-        ring_public_index: u16,
-        data: &[u8],
-        ad: &[u8]
-    ) -> Result<RingVRFOutput, CryptoError> {
+    fn new(ring_public_keys: Vec<Vec<u8>>) -> Result<Self, CryptoError> {
         if ring_public_keys.is_empty() {
             return Err(CryptoError::InvalidInput("Ring public keys list cannot be empty".to_string()));
         }
+        
+        let mut parsed_keys = Vec::with_capacity(ring_public_keys.len());
+        for pk_bytes in ring_public_keys {
+            let pk = Public::<BandersnatchSha512Ell2>::deserialize_compressed(&mut &pk_bytes[..])
+                .map_err(wrap_serialization_error)?;
+            parsed_keys.push(pk);
+        }
+        
+        Ok(Self {
+            ring_public_keys: parsed_keys
+        })
+    }
 
+    /// Generate VRF proof and output using a key pair and a ring of public keys
+    fn prove(
+        &self,
+        key_pair: &KeyPairVRF,
+        ring_public_index: u16,
+        data: &[u8],
+        ad: &[u8]
+    ) -> Result<(RingVRFProof, VRFOutput), CryptoError> {
         let input = Input::new(data)
             .ok_or_else(|| CryptoError::InvalidInput("Failed to create VRF input from data".to_string()))?;
         
-        let mut ring_pks = Vec::with_capacity(ring_public_keys.len());
-        for pk_bytes in ring_public_keys.iter() {
-            let pk = Public::<BandersnatchSha512Ell2>::deserialize_compressed(&mut &pk_bytes[..])
-                .map_err(wrap_serialization_error)?;
-            ring_pks.push(pk);
-        }
-        if ring_pks.len() - 1 < ring_public_index.into() {
+        if &self.ring_public_keys.len() - 1 < ring_public_index.into() {
             return Err(CryptoError::InvalidInput("Ring public index out of range".to_string()));
         }
-
-        let ring_ctx = get_ring_context(ring_pks.len())?;
-        let prover_key = ring_ctx.prover_key(&ring_pks.iter().map(|pk| pk.0).collect::<Vec<_>>());
+    
+        let ring_ctx = get_ring_context(self.ring_public_keys.len())?;
+        let prover_key = ring_ctx.prover_key(&self.ring_public_keys.iter().map(|pk| pk.0).collect::<Vec<_>>());
         let prover = ring_ctx.prover(prover_key, ring_public_index.into());
 
         let output = key_pair.secret.output(input);
         let proof = RingProver::prove(&key_pair.secret, input, output, ad, &prover);
 
-        Ok(RingVRFOutput { proof, output })
+        Ok((RingVRFProof { proof }, VRFOutput { output }))
     }
 
     /// Verify a ring VRF proof and output
-    #[staticmethod]
     fn verify(
-        ring_public_keys: Vec<&[u8]>,
+        &self,
         data: &[u8],
         ad: &[u8],
-        proof_and_output: &RingVRFOutput,
+        proof: &RingVRFProof,
+        output: &VRFOutput,
     ) -> Result<bool, CryptoError> {
-        if ring_public_keys.is_empty() {
-            return Err(CryptoError::InvalidInput("Ring public keys list cannot be empty".to_string()));
-        }
-
         let input = Input::new(data)
             .ok_or_else(|| CryptoError::InvalidInput("Failed to create VRF input from data".to_string()))?;
-        
-        let mut ring_pks = Vec::with_capacity(ring_public_keys.len());
-        for pk_bytes in ring_public_keys.iter() {
-            let pk = Public::<BandersnatchSha512Ell2>::deserialize_compressed(&mut &pk_bytes[..])
-                .map_err(wrap_serialization_error)?;
-            ring_pks.push(pk);
-        }
 
-        let ring_ctx = get_ring_context(ring_pks.len())?;
-        let verifier_key = ring_ctx.verifier_key(&ring_pks.iter().map(|pk| pk.0).collect::<Vec<_>>());
+        let ring_ctx = get_ring_context(self.ring_public_keys.len())?;
+        let verifier_key = ring_ctx.verifier_key(&self.ring_public_keys.iter().map(|pk| pk.0).collect::<Vec<_>>());
         let verifier = ring_ctx.verifier(verifier_key);
 
-        <Public<BandersnatchSha512Ell2> as RingVerifier<BandersnatchSha512Ell2>>::verify(input, proof_and_output.output, ad, &proof_and_output.proof, &verifier).map_err(wrap_vrf_error)?;
+        <Public<BandersnatchSha512Ell2> as RingVerifier<BandersnatchSha512Ell2>>::verify(input, output.output, ad, &proof.proof, &verifier).map_err(wrap_vrf_error)?;
 
         Ok(true)
     }
 
-    /// Generate bandersnatch root from ring public keys
-    #[staticmethod]
-    fn bandersnatch_root(ring_public_keys: Vec<&[u8]>) -> PyResult<Py<PyBytes>> {
-        Python::with_gil(|py| {
-            if ring_public_keys.is_empty() {
-                return Err(CryptoError::InvalidInput("Ring public keys list cannot be empty".to_string()).into());
-            }
+    /// Generate bandersnatch root from stored ring public keys
+    fn root<'py>(&self, py: Python<'py>) -> Result<Py<PyBytes>, CryptoError> {
+        let ring_ctx = get_ring_context(self.ring_public_keys.len())?;
+        let verifier_key = ring_ctx.verifier_key(&self.ring_public_keys.iter().map(|pk| pk.0).collect::<Vec<_>>());
+        let commitment = verifier_key.commitment();
 
-            let mut ring_pks = Vec::with_capacity(ring_public_keys.len());
-            for pk_bytes in ring_public_keys.iter() {
-                let pk = Public::<BandersnatchSha512Ell2>::deserialize_compressed(&mut &pk_bytes[..])
-                    .map_err(wrap_serialization_error)?;
-                ring_pks.push(pk);
-            }
+        let mut bytes = Vec::new();
+        commitment.serialize_compressed(&mut bytes)
+            .map_err(wrap_serialization_error)?;
 
-            let ring_ctx = get_ring_context(ring_pks.len())?;
-            let verifier_key = ring_ctx.verifier_key(&ring_pks.iter().map(|pk| pk.0).collect::<Vec<_>>());
-            let commitment = verifier_key.commitment();
-
-            let mut bytes = Vec::new();
-            commitment.serialize_compressed(&mut bytes)
-                .map_err(wrap_serialization_error)?;
-
-            Ok(PyBytes::new(py, &bytes).into())
-        })
+        Ok(PyBytes::new(py, &bytes).into())
     }
 }
 
 /// Python module
 #[pymodule]
-fn cryptography(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
+fn cryptography(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<KeyPairVRF>()?;
-    m.add_class::<SingleVRFOutput>()?;
-    m.add_class::<RingVRFOutput>()?;
+    m.add_class::<VRFOutput>()?;
+    m.add_class::<SingleVRFProof>()?;
+    m.add_class::<RingVRFProof>()?;
     m.add_class::<SingleVRF>()?;
     m.add_class::<RingVRF>()?;
     Ok(())

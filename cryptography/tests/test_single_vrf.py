@@ -5,38 +5,38 @@ verifying its sign/verify functionality works as expected.
 """
 
 import pytest
-from cryptography import KeyPairVRF, SingleVRF
+from cryptography import KeyPairVRF, SingleVRF, VRFOutput
 
-def test_fallback_vrf_proof_output_bytes():
-    """Test accessing proof and output bytes from SingleVRFOutput.
+def test_single_vrf_proof_output_bytes():
+    """Test accessing bytes from SingleVRFProof and VRFOutput.
     
     This test verifies that:
-    1. proof_bytes() returns non-empty bytes
-    2. output_bytes() returns non-empty bytes
+    1. proof.bytes() returns non-empty bytes
+    2. output.bytes() returns non-empty bytes
     3. Multiple calls return the same bytes
     """
     key_pair = KeyPairVRF()
     message = b"test message"
     ad = b"additional data"
     
-    fallback_vrf = SingleVRF()
-    proof_and_output = fallback_vrf.prove(key_pair, message, ad)
+    single_vrf = SingleVRF()
+    proof, output = single_vrf.prove(key_pair, message, ad)
     
     # Test proof bytes
-    proof_bytes = proof_and_output.proof_bytes()
+    proof_bytes = proof.bytes()
     assert isinstance(proof_bytes, bytes)
     assert len(proof_bytes) > 0
     
     # Test output bytes
-    output_bytes = proof_and_output.output_bytes()
+    output_bytes = output.bytes()
     assert isinstance(output_bytes, bytes)
     assert len(output_bytes) > 0
     
     # Test multiple calls return same bytes
-    assert proof_and_output.proof_bytes() == proof_bytes
-    assert proof_and_output.output_bytes() == output_bytes
+    assert proof.bytes() == proof_bytes
+    assert output.bytes() == output_bytes
 
-def test_fallback_vrf_sign_verify():
+def test_single_vrf_sign_verify():
     """Test SingleVRF sign and verify functionality.
     
     This test:
@@ -52,17 +52,17 @@ def test_fallback_vrf_sign_verify():
     ad = b"additional data"
     
     # Get proof and output using prove
-    fallback_vrf = SingleVRF()
-    proof_and_output = fallback_vrf.prove(key_pair, message, ad)
+    single_vrf = SingleVRF()
+    proof, output = single_vrf.prove(key_pair, message, ad)
     
     # Get public key bytes
     public_key_bytes = key_pair.public_key_bytes()
     
     # Verify the proof
-    result = fallback_vrf.verify(public_key_bytes, message, ad, proof_and_output)
+    result = single_vrf.verify(public_key_bytes, message, ad, proof, output)
     assert result is True
 
-def test_fallback_vrf_different_message():
+def test_single_vrf_different_message():
     """Test SingleVRF verify fails with different message.
     
     This test verifies that the verification fails when trying to verify
@@ -76,8 +76,8 @@ def test_fallback_vrf_different_message():
     ad = b"additional data"
     
     # Get proof and output using prove
-    fallback_vrf = SingleVRF()
-    proof_and_output = fallback_vrf.prove(key_pair, message, ad)
+    single_vrf = SingleVRF()
+    proof, output = single_vrf.prove(key_pair, message, ad)
     
     # Get public key bytes
     public_key_bytes = key_pair.public_key_bytes()
@@ -85,9 +85,9 @@ def test_fallback_vrf_different_message():
     # Try to verify with different message
     different_message = b"different message"
     with pytest.raises(ValueError):
-        fallback_vrf.verify(public_key_bytes, different_message, ad, proof_and_output)
+        single_vrf.verify(public_key_bytes, different_message, ad, proof, output)
 
-def test_fallback_vrf_different_ad():
+def test_single_vrf_different_ad():
     """Test SingleVRF verify fails with different additional data.
     
     This test verifies that the verification fails when trying to verify
@@ -97,21 +97,21 @@ def test_fallback_vrf_different_ad():
     message = b"test message"
     ad = b"original ad"
     
-    fallback_vrf = SingleVRF()
-    proof_and_output = fallback_vrf.prove(key_pair, message, ad)
+    single_vrf = SingleVRF()
+    proof, output = single_vrf.prove(key_pair, message, ad)
     public_key_bytes = key_pair.public_key_bytes()
     
     different_ad = b"different ad"
     with pytest.raises(ValueError):
-        fallback_vrf.verify(public_key_bytes, message, different_ad, proof_and_output)
+        single_vrf.verify(public_key_bytes, message, different_ad, proof, output)
 
 def test_single_vrf_empty_message_and_ad():
     """Test SingleVRF with empty message and additional data."""
     key_pair = KeyPairVRF()
-    fallback_vrf = SingleVRF()
+    single_vrf = SingleVRF()
     
-    proof_and_output = fallback_vrf.prove(key_pair, b"", b"")
-    result = fallback_vrf.verify(key_pair.public_key_bytes(), b"", b"", proof_and_output)
+    proof, output = single_vrf.prove(key_pair, b"", b"")
+    result = single_vrf.verify(key_pair.public_key_bytes(), b"", b"", proof, output)
     assert result is True
 
 def test_single_vrf_large_message_and_ad():
@@ -120,8 +120,8 @@ def test_single_vrf_large_message_and_ad():
     large_ad = b"y" * 1000000  # 1MB additional data
     
     key_pair = KeyPairVRF()
-    fallback_vrf = SingleVRF()
+    single_vrf = SingleVRF()
     
-    proof_and_output = fallback_vrf.prove(key_pair, large_message, large_ad)
-    result = fallback_vrf.verify(key_pair.public_key_bytes(), large_message, large_ad, proof_and_output)
+    proof, output = single_vrf.prove(key_pair, large_message, large_ad)
+    result = single_vrf.verify(key_pair.public_key_bytes(), large_message, large_ad, proof, output)
     assert result is True

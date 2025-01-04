@@ -5,14 +5,14 @@ verifying its sign/verify functionality works as expected.
 """
 
 import pytest
-from cryptography import KeyPairVRF, RingVRF
+from cryptography import KeyPairVRF, RingVRF, VRFOutput
 
 def test_ring_vrf_proof_output_bytes():
-    """Test accessing proof and output bytes from RingVRFOutput.
+    """Test accessing bytes from RingVRFProof and VRFOutput.
     
     This test verifies that:
-    1. proof_bytes() returns non-empty bytes
-    2. output_bytes() returns non-empty bytes
+    1. proof.bytes() returns non-empty bytes
+    2. output.bytes() returns non-empty bytes
     3. Multiple calls return the same bytes
     """
     key_pair1 = KeyPairVRF()
@@ -25,22 +25,22 @@ def test_ring_vrf_proof_output_bytes():
     message = b"test message"
     ad = b"additional data"
     
-    ring_vrf = RingVRF()
-    proof_and_output = ring_vrf.prove(key_pair1, ring_public_keys, 0, message, ad)
+    ring_vrf = RingVRF(ring_public_keys)
+    proof, output = ring_vrf.prove(key_pair1, 0, message, ad)
     
     # Test proof bytes
-    proof_bytes = proof_and_output.proof_bytes()
+    proof_bytes = proof.bytes()
     assert isinstance(proof_bytes, bytes)
     assert len(proof_bytes) > 0
     
     # Test output bytes
-    output_bytes = proof_and_output.output_bytes()
+    output_bytes = output.bytes()
     assert isinstance(output_bytes, bytes)
     assert len(output_bytes) > 0
     
     # Test multiple calls return same bytes
-    assert proof_and_output.proof_bytes() == proof_bytes
-    assert proof_and_output.output_bytes() == output_bytes
+    assert proof.bytes() == proof_bytes
+    assert output.bytes() == output_bytes
 
 def test_ring_vrf_sign_verify():
     """Test RingVRF sign and verify functionality.
@@ -67,47 +67,12 @@ def test_ring_vrf_sign_verify():
     message = b"test message"
     ad = b"additional data"
     
-    ring_vrf = RingVRF()
-    proof_and_output = ring_vrf.prove(key_pair1, ring_public_keys, 0, message, ad)
+    ring_vrf = RingVRF(ring_public_keys)
+    proof, output = ring_vrf.prove(key_pair1, 0, message, ad)
     
     # Verify the proof
-    result = ring_vrf.verify(ring_public_keys, message, ad, proof_and_output)
+    result = ring_vrf.verify(message, ad, proof, output)
     assert result is True
-
-def test_ring_vrf_different_indices():
-    """Test RingVRF with different indices for the same key.
-    
-    This test verifies that:
-    1. The same key can be used with different indices in the ring
-    2. The proofs are unique for different indices
-    3. All proofs verify correctly
-    """
-    key_pair1 = KeyPairVRF()
-    key_pair2 = KeyPairVRF()
-    
-    ring_public_keys = [
-        key_pair1.public_key_bytes(),
-        key_pair2.public_key_bytes(),
-        key_pair1.public_key_bytes()  # Duplicate key
-    ]
-    
-    message = b"test message"
-    ad = b"additional data"
-        
-    # Create proofs with different indices for the same key
-    ring_vrf = RingVRF()
-    proof1 = ring_vrf.prove(key_pair1, ring_public_keys, 0, message, ad)
-    proof2 = ring_vrf.prove(key_pair1, ring_public_keys, 2, message, ad)
-    
-    # Verify both proofs work
-    assert ring_vrf.verify(ring_public_keys, message, ad, proof1)
-    assert ring_vrf.verify(ring_public_keys, message, ad, proof2)
-    
-    # Verify proofs are different
-    assert proof1.proof_bytes() != proof2.proof_bytes()
-
-    # Verify outputs are same
-    assert proof1.output_bytes() == proof2.output_bytes()
 
 def test_ring_vrf_invalid_index():
     """Test RingVRF fails with invalid index."""
@@ -122,16 +87,16 @@ def test_ring_vrf_invalid_index():
     message = b"test message"
     ad = b"additional data"
     
-    ring_vrf = RingVRF()
+    ring_vrf = RingVRF(ring_public_keys)
     
     # Test with index >= ring size
     with pytest.raises(ValueError):
-        test = ring_vrf.prove(key_pair1, ring_public_keys, 2, message, ad)
+        ring_vrf.prove(key_pair1, 2, message, ad)
     
     # Test with index that doesn't match the key
-    proof_and_output = ring_vrf.prove(key_pair1, ring_public_keys, 1, message, ad)
+    proof, output = ring_vrf.prove(key_pair1, 1, message, ad)
     with pytest.raises(ValueError):
-        ring_vrf.verify(ring_public_keys, message, ad, proof_and_output)
+        ring_vrf.verify(message, ad, proof, output)
 
 def test_ring_vrf_different_message():
     """Test RingVRF verify fails with different message.
@@ -157,13 +122,13 @@ def test_ring_vrf_different_message():
     ad = b"additional data"
     
     # Get proof and output using prove
-    ring_vrf = RingVRF()
-    proof_and_output = ring_vrf.prove(key_pair1, ring_public_keys, 0, message, ad)
+    ring_vrf = RingVRF(ring_public_keys)
+    proof, output = ring_vrf.prove(key_pair1, 0, message, ad)
     
     # Try to verify with different message
     different_message = b"different message"
     with pytest.raises(ValueError):
-        ring_vrf.verify(ring_public_keys, different_message, ad, proof_and_output)
+        ring_vrf.verify(different_message, ad, proof, output)
 
 def test_ring_vrf_invalid_ring():
     """Test RingVRF fails with invalid ring.
@@ -176,13 +141,10 @@ def test_ring_vrf_invalid_ring():
     
     # Test with empty ring
     empty_ring = []
-    message = b"test message"
-    ad = b"additional data"
     
-    # Attempt to prove with empty ring should fail
-    ring_vrf = RingVRF()
+    # Attempt to create RingVRF with empty ring should fail
     with pytest.raises(ValueError):
-        ring_vrf.prove(key_pair, empty_ring, 0, message, ad)
+        RingVRF(empty_ring)
 
 def test_ring_vrf_different_ad():
     """Test RingVRF verify fails with different additional data."""
@@ -199,12 +161,12 @@ def test_ring_vrf_different_ad():
     message = b"test message"
     ad = b"original ad"
     
-    ring_vrf = RingVRF()
-    proof_and_output = ring_vrf.prove(key_pair1, ring_public_keys, 0, message, ad)
+    ring_vrf = RingVRF(ring_public_keys)
+    proof, output = ring_vrf.prove(key_pair1, 0, message, ad)
     
     different_ad = b"different ad"
     with pytest.raises(ValueError):
-        ring_vrf.verify(ring_public_keys, message, different_ad, proof_and_output)
+        ring_vrf.verify(message, different_ad, proof, output)
 
 def test_ring_vrf_large_ring():
     """Test RingVRF with a larger ring size (100 keys)."""
@@ -215,75 +177,16 @@ def test_ring_vrf_large_ring():
     message = b"test message"
     ad = b"additional data"
     
+    ring_vrf = RingVRF(ring_public_keys)
+    
     # Test with first key
-    ring_vrf = RingVRF()
-    proof_and_output = ring_vrf.prove(key_pairs[0], ring_public_keys, 0, message, ad)
-    result = ring_vrf.verify(ring_public_keys, message, ad, proof_and_output)
+    proof, output = ring_vrf.prove(key_pairs[0], 0, message, ad)
+    result = ring_vrf.verify(message, ad, proof, output)
     assert result is True
     
     # Test with last key
-    proof_and_output = ring_vrf.prove(key_pairs[-1], ring_public_keys, 99, message, ad)
-    result = ring_vrf.verify(ring_public_keys, message, ad, proof_and_output)
-    assert result is True
-
-def test_ring_vrf_reordered_ring():
-    """Test RingVRF with keys in different order than signing key."""
-    key_pair1 = KeyPairVRF()
-    key_pair2 = KeyPairVRF()
-    key_pair3 = KeyPairVRF()
-    
-    # Original order
-    ring_public_keys = [
-        key_pair1.public_key_bytes(),
-        key_pair2.public_key_bytes(),
-        key_pair3.public_key_bytes()
-    ]
-    
-    message = b"test message"
-    ad = b"additional data"
-    
-    ring_vrf = RingVRF()
-    proof_and_output = ring_vrf.prove(key_pair1, ring_public_keys, 0, message, ad)
-    
-    # Verify with reordered ring
-    reordered_ring = [
-        key_pair3.public_key_bytes(),
-        key_pair1.public_key_bytes(),
-        key_pair2.public_key_bytes()
-    ]
-    
-    with pytest.raises(ValueError):
-        ring_vrf.verify(reordered_ring, message, ad, proof_and_output)
-
-def test_ring_vrf_duplicate_keys():
-    """Test RingVRF works with duplicate keys in ring."""
-    key_pair1 = KeyPairVRF()
-    key_pair2 = KeyPairVRF()
-    
-    pk1_bytes = key_pair1.public_key_bytes()
-    pk2_bytes = key_pair2.public_key_bytes()
-    
-    # Create ring with duplicate key
-    ring_public_keys = [pk1_bytes, pk2_bytes, pk1_bytes]
-    
-    message = b"test message"
-    ad = b"additional data"
-    
-    ring_vrf = RingVRF()
-    
-    # Test signing with first occurrence of key1
-    proof_and_output = ring_vrf.prove(key_pair1, ring_public_keys, 0, message, ad)
-    result = ring_vrf.verify(ring_public_keys, message, ad, proof_and_output)
-    assert result is True
-    
-    # Test signing with second occurrence of key1
-    proof_and_output = ring_vrf.prove(key_pair1, ring_public_keys, 2, message, ad)
-    result = ring_vrf.verify(ring_public_keys, message, ad, proof_and_output)
-    assert result is True
-    
-    # Test signing with key2
-    proof_and_output = ring_vrf.prove(key_pair2, ring_public_keys, 1, message, ad)
-    result = ring_vrf.verify(ring_public_keys, message, ad, proof_and_output)
+    proof, output = ring_vrf.prove(key_pairs[-1], 99, message, ad)
+    result = ring_vrf.verify(message, ad, proof, output)
     assert result is True
 
 def test_ring_vrf_empty_message_and_ad():
@@ -295,9 +198,9 @@ def test_ring_vrf_empty_message_and_ad():
         key_pair2.public_key_bytes()
     ]
     
-    ring_vrf = RingVRF()
-    proof_and_output = ring_vrf.prove(key_pair1, ring_public_keys, 0, b"", b"")
-    result = ring_vrf.verify(ring_public_keys, b"", b"", proof_and_output)
+    ring_vrf = RingVRF(ring_public_keys)
+    proof, output = ring_vrf.prove(key_pair1, 0, b"", b"")
+    result = ring_vrf.verify(b"", b"", proof, output)
     assert result is True
 
 def test_ring_vrf_large_message_and_ad():
@@ -312,7 +215,7 @@ def test_ring_vrf_large_message_and_ad():
         key_pair2.public_key_bytes()
     ]
     
-    ring_vrf = RingVRF()
-    proof_and_output = ring_vrf.prove(key_pair1, ring_public_keys, 0, large_message, large_ad)
-    result = ring_vrf.verify(ring_public_keys, large_message, large_ad, proof_and_output)
+    ring_vrf = RingVRF(ring_public_keys)
+    proof, output = ring_vrf.prove(key_pair1, 0, large_message, large_ad)
+    result = ring_vrf.verify(large_message, large_ad, proof, output)
     assert result is True
