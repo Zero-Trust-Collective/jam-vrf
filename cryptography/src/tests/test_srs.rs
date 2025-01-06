@@ -9,7 +9,7 @@ fn test_get_pcs_params() {
     
     // Test that we can create a ring context with the parameters
     let ring_size = 6;
-    let context: ring::RingContext<BandersnatchSha512Ell2> = ring::RingContext::from_srs(ring_size, params)
+    let _: ring::RingContext<BandersnatchSha512Ell2> = ring::RingContext::from_srs(ring_size, params)
         .expect("Failed to create ring context from parameters");
 }
 
