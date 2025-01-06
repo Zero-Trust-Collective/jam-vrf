@@ -54,8 +54,7 @@ def test_ring_vrf_bandersnatch_root():
     with pytest.raises(ValueError):
         RingVRF([])
 
-@pytest.mark.skip(reason="TODO need to fix bad constants")
-def test_ring_vrf_bandersnatch_root_known_values():
+def test_ring_vrf_bandersnatch_root_no_epoch_change():
     """Test RingVRF bandersnatch root generation with known input/output values."""
     # First create a key pair to see the format of its public key
     key_pair = KeyPairVRF()
@@ -64,23 +63,22 @@ def test_ring_vrf_bandersnatch_root_known_values():
     
     # Known public keys
     public_keys = [
-        bytes.fromhex("aa2b95f7572875b0d0f186552ae745ba8222fc0b5bd456554bfe51c68938f8bc"),
-        bytes.fromhex("f16e5352840afb47e206b5c89f560f2611835855cf2e6ebad1acc9520a72591d"),
         bytes.fromhex("5e465beb01dbafe160ce8216047f2155dd0569f058afd52dcea601025a8d161d"),
-        bytes.fromhex("48e5fcdce10e0b64ec4eebd0d9211c7bac2f27ce54bca6f7776ff6fee86ab3e3"),
         bytes.fromhex("3d5e5a51aab2b048f8686ecd79712a80e3265a114cc73f14bdb2a59233fb66d0"),
-        bytes.fromhex("7f6190116d118d643a98878e294ccf62b509e214299931aad8ff9764181a4e33")
+        bytes.fromhex("aa2b95f7572875b0d0f186552ae745ba8222fc0b5bd456554bfe51c68938f8bc"),
+        bytes.fromhex("7f6190116d118d643a98878e294ccf62b509e214299931aad8ff9764181a4e33"),
+        bytes.fromhex("48e5fcdce10e0b64ec4eebd0d9211c7bac2f27ce54bca6f7776ff6fee86ab3e3"),
+        bytes.fromhex("f16e5352840afb47e206b5c89f560f2611835855cf2e6ebad1acc9520a72591d")
     ]
 
     # Expected output ring
-    expected_ring = bytes.fromhex("95f318fbd93287e8c3987874cded9b29adae70cf109c4321636fd9faeea003f8140710df8894ffbd6c84eaef4ff7cb58b17892749bb3cb3efe528eef951c688f7e83d3ede96f432de64f0b07e5c3cf0232f79ea4c221b7407f9a2348c0a0110692e630ae2b14e758ab0960e372172203f4c9a41777dadd529971d7ab9d23ab29fe0e9c85ec450505dde7f5ac038274cf")
+    expected_ring = bytes.fromhex("a949a60ad754d683d398a0fb674a9bbe525ca26b0b0b9c8d79f210291b40d286d9886a9747a4587d497f2700baee229ca72c54ad652e03e74f35f075d0189a40d41e5ee65703beb5d7ae8394da07aecf9056b98c61156714fd1d9982367bee2992e630ae2b14e758ab0960e372172203f4c9a41777dadd529971d7ab9d23ab29fe0e9c85ec450505dde7f5ac038274cf")
 
     ring_vrf = RingVRF(public_keys)
     result = ring_vrf.root()
     
     assert result == expected_ring, f"Expected {expected_ring.hex()}, but got {result.hex()}"
 
-@pytest.mark.skip(reason="TODO need to fix bad constants")
 def test_ring_vrf_bandersnatch_root_eight_keys():
     """Test RingVRF bandersnatch root generation with a known 8-key ring."""
     # Known public keys
