@@ -107,7 +107,7 @@ impl VRFOutput {
     /// Get the serialized bytes
     fn bytes<'py>(&self, py: Python<'py>) -> Result<Py<PyBytes>, CryptoError> {
         let mut bytes = Vec::new();
-        self.output.serialize_uncompressed(&mut bytes)
+        self.output.serialize_compressed(&mut bytes)
             .map_err(wrap_serialization_error)?;
         Ok(PyBytes::new(py, &bytes).into())
     }
@@ -126,10 +126,17 @@ pub struct SingleVRFProof {
 
 #[pymethods]
 impl SingleVRFProof {
+    #[new]
+    fn new(bytes: &[u8]) -> Result<Self, CryptoError> {
+        let proof = IetfProof::deserialize_compressed(&mut &bytes[..])
+            .map_err(wrap_serialization_error)?;
+        Ok(Self { proof })
+    }
+
     /// Get the serialized bytes
     fn bytes<'py>(&self, py: Python<'py>) -> Result<Py<PyBytes>, CryptoError> {
         let mut bytes = Vec::new();
-        self.proof.serialize_uncompressed(&mut bytes)
+        self.proof.serialize_compressed(&mut bytes)
             .map_err(wrap_serialization_error)?;
         Ok(PyBytes::new(py, &bytes).into())
     }
@@ -143,10 +150,17 @@ pub struct RingVRFProof {
 
 #[pymethods]
 impl RingVRFProof {
+    #[new]
+    fn new(bytes: &[u8]) -> Result<Self, CryptoError> {
+        let proof = RingProof::deserialize_compressed(&mut &bytes[..])
+            .map_err(wrap_serialization_error)?;
+        Ok(Self { proof })
+    }
+
     /// Get the serialized bytes
     fn bytes<'py>(&self, py: Python<'py>) -> Result<Py<PyBytes>, CryptoError> {
         let mut bytes = Vec::new();
-        self.proof.serialize_uncompressed(&mut bytes)
+        self.proof.serialize_compressed(&mut bytes)
             .map_err(wrap_serialization_error)?;
         Ok(PyBytes::new(py, &bytes).into())
     }

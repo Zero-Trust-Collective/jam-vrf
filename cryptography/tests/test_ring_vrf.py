@@ -5,7 +5,7 @@ verifying its sign/verify functionality works as expected.
 """
 
 import pytest
-from cryptography import KeyPairVRF, RingVRF, VRFOutput
+from cryptography import KeyPairVRF, RingVRF, VRFOutput, RingVRFProof
 
 def test_ring_vrf_proof_output_bytes():
     """Test accessing bytes from RingVRFProof and VRFOutput.
@@ -41,6 +41,54 @@ def test_ring_vrf_proof_output_bytes():
     # Test multiple calls return same bytes
     assert proof.bytes() == proof_bytes
     assert output.bytes() == output_bytes
+
+def test_ring_vrf_from_bytes():
+    """Test creating RingVRFProof and VRFOutput from bytes.
+    
+    This test verifies that:
+    1. Can create RingVRFProof from bytes
+    2. Can create VRFOutput from bytes
+    3. Reconstructed objects work correctly in verification
+    """
+    key_pair1 = KeyPairVRF()
+    key_pair2 = KeyPairVRF()
+    ring_public_keys = [
+        key_pair1.public_key_bytes(),
+        key_pair2.public_key_bytes()
+    ]
+    
+    message = b"test message"
+    ad = b"additional data"
+    
+    ring_vrf = RingVRF(ring_public_keys)
+    proof, output = ring_vrf.prove(key_pair1, 0, message, ad)
+    
+    # Get bytes
+    proof_bytes = proof.bytes()
+    output_bytes = output.bytes()
+    
+    # Create new objects from bytes
+    reconstructed_proof = RingVRFProof(proof_bytes)
+    reconstructed_output = VRFOutput(output_bytes)
+    
+    # Verify reconstructed objects work
+    result = ring_vrf.verify(message, ad, reconstructed_proof, reconstructed_output)
+    assert result is True
+
+def test_ring_vrf_invalid_bytes():
+    """Test error handling when creating from invalid bytes."""
+    # Test with empty bytes
+    with pytest.raises(RuntimeError):
+        RingVRFProof(b"")
+    with pytest.raises(RuntimeError):
+        VRFOutput(b"")
+    
+    # Test with invalid bytes
+    invalid_bytes = b"invalid bytes"
+    with pytest.raises(RuntimeError):
+        RingVRFProof(invalid_bytes)
+    with pytest.raises(RuntimeError):
+        VRFOutput(invalid_bytes)
 
 def test_ring_vrf_sign_verify():
     """Test RingVRF sign and verify functionality.

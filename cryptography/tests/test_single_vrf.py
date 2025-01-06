@@ -5,7 +5,7 @@ verifying its sign/verify functionality works as expected.
 """
 
 import pytest
-from cryptography import KeyPairVRF, SingleVRF, VRFOutput
+from cryptography import KeyPairVRF, SingleVRF, VRFOutput, SingleVRFProof
 
 def test_single_vrf_proof_output_bytes():
     """Test accessing bytes from SingleVRFProof and VRFOutput.
@@ -35,6 +35,49 @@ def test_single_vrf_proof_output_bytes():
     # Test multiple calls return same bytes
     assert proof.bytes() == proof_bytes
     assert output.bytes() == output_bytes
+
+def test_single_vrf_from_bytes():
+    """Test creating SingleVRFProof and VRFOutput from bytes.
+    
+    This test verifies that:
+    1. Can create SingleVRFProof from bytes
+    2. Can create VRFOutput from bytes
+    3. Reconstructed objects work correctly in verification
+    """
+    key_pair = KeyPairVRF()
+    message = b"test message"
+    ad = b"additional data"
+    
+    single_vrf = SingleVRF()
+    proof, output = single_vrf.prove(key_pair, message, ad)
+    
+    # Get bytes
+    proof_bytes = proof.bytes()
+    output_bytes = output.bytes()
+    
+    # Create new objects from bytes
+    reconstructed_proof = SingleVRFProof(proof_bytes)
+    reconstructed_output = VRFOutput(output_bytes)
+    
+    # Verify reconstructed objects work
+    public_key_bytes = key_pair.public_key_bytes()
+    result = single_vrf.verify(public_key_bytes, message, ad, reconstructed_proof, reconstructed_output)
+    assert result is True
+
+def test_single_vrf_invalid_bytes():
+    """Test error handling when creating from invalid bytes."""
+    # Test with empty bytes
+    with pytest.raises(ValueError):
+        SingleVRFProof(b"")
+    with pytest.raises(RuntimeError):
+        VRFOutput(b"")
+    
+    # Test with invalid bytes
+    invalid_bytes = b"invalid bytes"
+    with pytest.raises(ValueError):
+        SingleVRFProof(invalid_bytes)
+    with pytest.raises(RuntimeError):
+        VRFOutput(invalid_bytes)
 
 def test_single_vrf_sign_verify():
     """Test SingleVRF sign and verify functionality.
