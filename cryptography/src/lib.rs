@@ -239,10 +239,20 @@ impl RingVRF {
         }
         
         let mut parsed_keys = Vec::with_capacity(ring_public_keys.len());
+        let mut padding_point = None;
+        
         for pk_bytes in ring_public_keys {
-            let affine = AffinePoint::deserialize_compressed(&mut &pk_bytes[..])
-                .map_err(wrap_serialization_error)?;
-            parsed_keys.push(affine);
+            match AffinePoint::deserialize_compressed(&mut &pk_bytes[..]) {
+                Ok(point) => parsed_keys.push(point),
+                Err(_) => {
+                    // Get padding point only once when first needed
+                    if padding_point.is_none() {
+                        let ring_ctx = get_ring_context(6)?;
+                        padding_point = Some(ring_ctx.padding_point());
+                    }
+                    parsed_keys.push(padding_point.unwrap());
+                }
+            }
         }
         
         Ok(Self {
