@@ -1,11 +1,11 @@
-"""Tests for SingleVRF functionality in the cryptography module.
+"""Tests for single VRF functionality in the cryptography module.
 
-This module contains tests for the SingleVRF class,
-verifying its sign/verify functionality works as expected.
+This module contains tests for the SingleVRFProver and SingleVRFVerifier classes,
+verifying their prove/verify functionality works as expected.
 """
 
 import pytest
-from cryptography import KeyPairVRF, SingleVRF, VRFOutput, SingleVRFProof
+from cryptography import KeyPairVRF, SingleVRFProver, SingleVRFVerifier, VRFOutput, SingleVRFProof
 
 def test_single_vrf_proof_output_bytes():
     """Test accessing bytes from SingleVRFProof and VRFOutput.
@@ -19,8 +19,8 @@ def test_single_vrf_proof_output_bytes():
     message = b"test message"
     ad = b"additional data"
     
-    single_vrf = SingleVRF()
-    proof, output = single_vrf.prove(key_pair, message, ad)
+    prover = SingleVRFProver()
+    proof, output = prover.prove(key_pair, message, ad)
     
     # Test proof bytes
     proof_bytes = proof.bytes()
@@ -48,8 +48,8 @@ def test_single_vrf_from_bytes():
     message = b"test message"
     ad = b"additional data"
     
-    single_vrf = SingleVRF()
-    proof, output = single_vrf.prove(key_pair, message, ad)
+    prover = SingleVRFProver()
+    proof, output = prover.prove(key_pair, message, ad)
     
     # Get bytes
     proof_bytes = proof.bytes()
@@ -61,7 +61,8 @@ def test_single_vrf_from_bytes():
     
     # Verify reconstructed objects work
     public_key_bytes = key_pair.public_key_bytes()
-    result = single_vrf.verify(public_key_bytes, message, ad, reconstructed_proof, reconstructed_output)
+    verifier = SingleVRFVerifier()
+    result = verifier.verify(public_key_bytes, message, ad, reconstructed_output, reconstructed_proof)
     assert result is True
 
 def test_single_vrf_invalid_bytes():
@@ -79,13 +80,13 @@ def test_single_vrf_invalid_bytes():
     with pytest.raises(RuntimeError):
         VRFOutput(invalid_bytes)
 
-def test_single_vrf_sign_verify():
-    """Test SingleVRF sign and verify functionality.
+def test_single_vrf_prove_verify():
+    """Test SingleVRF prove and verify functionality.
     
     This test:
     1. Creates a new key pair
-    2. Signs a message using SingleVRF.prove
-    3. Verifies the signature using SingleVRF.verify
+    2. Signs a message using SingleVRFProver.prove
+    3. Verifies the signature using SingleVRFVerifier.verify
     """
     # Create key pair
     key_pair = KeyPairVRF()
@@ -95,14 +96,15 @@ def test_single_vrf_sign_verify():
     ad = b"additional data"
     
     # Get proof and output using prove
-    single_vrf = SingleVRF()
-    proof, output = single_vrf.prove(key_pair, message, ad)
+    prover = SingleVRFProver()
+    proof, output = prover.prove(key_pair, message, ad)
     
     # Get public key bytes
     public_key_bytes = key_pair.public_key_bytes()
     
     # Verify the proof
-    result = single_vrf.verify(public_key_bytes, message, ad, proof, output)
+    verifier = SingleVRFVerifier()
+    result = verifier.verify(public_key_bytes, message, ad, output, proof)
     assert result is True
 
 def test_single_vrf_different_message():
@@ -119,16 +121,17 @@ def test_single_vrf_different_message():
     ad = b"additional data"
     
     # Get proof and output using prove
-    single_vrf = SingleVRF()
-    proof, output = single_vrf.prove(key_pair, message, ad)
+    prover = SingleVRFProver()
+    proof, output = prover.prove(key_pair, message, ad)
     
     # Get public key bytes
     public_key_bytes = key_pair.public_key_bytes()
     
     # Try to verify with different message
     different_message = b"different message"
+    verifier = SingleVRFVerifier()
     with pytest.raises(ValueError):
-        single_vrf.verify(public_key_bytes, different_message, ad, proof, output)
+        verifier.verify(public_key_bytes, different_message, ad, output, proof)
 
 def test_single_vrf_different_ad():
     """Test SingleVRF verify fails with different additional data.
@@ -140,21 +143,23 @@ def test_single_vrf_different_ad():
     message = b"test message"
     ad = b"original ad"
     
-    single_vrf = SingleVRF()
-    proof, output = single_vrf.prove(key_pair, message, ad)
+    prover = SingleVRFProver()
+    proof, output = prover.prove(key_pair, message, ad)
     public_key_bytes = key_pair.public_key_bytes()
     
     different_ad = b"different ad"
+    verifier = SingleVRFVerifier()
     with pytest.raises(ValueError):
-        single_vrf.verify(public_key_bytes, message, different_ad, proof, output)
+        verifier.verify(public_key_bytes, message, different_ad, output, proof)
 
 def test_single_vrf_empty_message_and_ad():
     """Test SingleVRF with empty message and additional data."""
     key_pair = KeyPairVRF()
-    single_vrf = SingleVRF()
+    prover = SingleVRFProver()
+    verifier = SingleVRFVerifier()
     
-    proof, output = single_vrf.prove(key_pair, b"", b"")
-    result = single_vrf.verify(key_pair.public_key_bytes(), b"", b"", proof, output)
+    proof, output = prover.prove(key_pair, b"", b"")
+    result = verifier.verify(key_pair.public_key_bytes(), b"", b"", output, proof)
     assert result is True
 
 def test_single_vrf_large_message_and_ad():
@@ -163,8 +168,9 @@ def test_single_vrf_large_message_and_ad():
     large_ad = b"y" * 1000000  # 1MB additional data
     
     key_pair = KeyPairVRF()
-    single_vrf = SingleVRF()
+    prover = SingleVRFProver()
+    verifier = SingleVRFVerifier()
     
-    proof, output = single_vrf.prove(key_pair, large_message, large_ad)
-    result = single_vrf.verify(key_pair.public_key_bytes(), large_message, large_ad, proof, output)
+    proof, output = prover.prove(key_pair, large_message, large_ad)
+    result = verifier.verify(key_pair.public_key_bytes(), large_message, large_ad, output, proof)
     assert result is True

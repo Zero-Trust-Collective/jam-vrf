@@ -1,4 +1,5 @@
 use crate::*;
+use pyo3::Python;
 
 #[test]
 fn test_single_signature_vrf() {
@@ -10,11 +11,14 @@ fn test_single_signature_vrf() {
     let data = b"test data";
     let ad = b"additional data";
 
-    // Generate proof and output
-    let (proof, output) = SingleVRF::prove(&key_pair, data, ad).unwrap();
+    // Create prover and generate proof and output
+    let prover = SingleVRFProver::new();
 
     Python::with_gil(|py| {
         let pk_bytes = key_pair.public_key_bytes(py).unwrap();
+        
+        // Generate proof and output
+        let (proof, output) = prover.prove(&key_pair, data, ad).unwrap();
         
         // Test serialization/deserialization of proof
         let proof_bytes = proof.bytes(py).unwrap();
@@ -24,13 +28,14 @@ fn test_single_signature_vrf() {
         let output_bytes = output.bytes(py).unwrap();
         let reconstructed_output = VRFOutput::new(output_bytes.as_bytes(py)).unwrap();
         
-        // Verify reconstructed proof and output
-        let result = SingleVRF::verify(
-            pk_bytes.as_bytes(py), 
-            data, 
-            ad, 
-            &reconstructed_proof, 
-            &reconstructed_output
+        // Create verifier and verify reconstructed proof and output
+        let verifier = SingleVRFVerifier::new();
+        let result = verifier.verify(
+            pk_bytes.as_bytes(py),
+            data,
+            ad,
+            &reconstructed_output,
+            &reconstructed_proof
         ).unwrap();
         assert!(result);
     });
@@ -60,11 +65,14 @@ fn test_ring_signature_vrf() {
         let data = b"test data";
         let ad = b"additional data";
 
-        // Create RingVRF instance with the ring public keys
-        let ring_vrf = RingVRF::new(ring_public_keys.clone()).unwrap();
+        // Get ring commitment
+        let commitment = get_ring_commitment(py, ring_public_keys.clone()).unwrap();
+
+        // Create prover for the first key
+        let prover = RingVRFProver::new(ring_public_keys, 0).unwrap();
 
         // Generate proof and output using first key pair
-        let (proof, output) = ring_vrf.prove(&key_pair1, 0, data, ad).unwrap();
+        let (proof, output) = prover.prove(&key_pair1, data, ad).unwrap();
 
         // Test serialization/deserialization of proof
         let proof_bytes = proof.bytes(py).unwrap();
@@ -74,13 +82,15 @@ fn test_ring_signature_vrf() {
         let output_bytes = output.bytes(py).unwrap();
         let reconstructed_output = VRFOutput::new(output_bytes.as_bytes(py)).unwrap();
 
-        // Verify reconstructed proof and output
-        let result = ring_vrf.verify(data, ad, &reconstructed_proof, &reconstructed_output).unwrap();
+        // Create verifier and verify reconstructed proof and output
+        let verifier = RingVRFVerifier::new(commitment.as_bytes(py)).unwrap();
+        let result = verifier.verify(
+            data,
+            ad,
+            &reconstructed_output,
+            &reconstructed_proof
+        ).unwrap();
         assert!(result);
-
-        // Test root generation
-        let root = ring_vrf.root(py).unwrap();
-        assert!(!root.as_bytes(py).is_empty());
     });
 }
 

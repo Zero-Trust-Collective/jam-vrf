@@ -1,4 +1,4 @@
-use crate::RingVRF;
+use crate::*;
 use pyo3::Python;
 
 #[test]
@@ -18,10 +18,8 @@ fn test_ring_vrf_bandersnatch_root_epoch_change() {
 
     // Generate root using our implementation
     Python::with_gil(|py| {
-        let ring_vrf = RingVRF::new(public_keys).unwrap();
-        let root = ring_vrf.root(py).unwrap();
-        let root_bytes: Vec<u8> = root.extract(py).unwrap();
-        assert_eq!(root_bytes.as_slice(), expected_ring.as_slice());
+        let commitment = get_ring_commitment(py, public_keys).unwrap();
+        assert_eq!(commitment.as_bytes(py), expected_ring.as_slice());
     });
 }
 
@@ -42,9 +40,7 @@ fn test_ring_vrf_bandersnatch_root_no_epoch_change() {
 
     // Generate root using our implementation
     Python::with_gil(|py| {
-        let ring_vrf = RingVRF::new(public_keys).unwrap();
-        let root = ring_vrf.root(py).unwrap();
-        let root_bytes: Vec<u8> = root.extract(py).unwrap();
-        assert_eq!(hex::encode(root_bytes), hex::encode(expected_ring));
+        let commitment = get_ring_commitment(py, public_keys).unwrap();
+        assert_eq!(commitment.as_bytes(py), expected_ring.as_slice());
     });
 }
