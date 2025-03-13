@@ -77,7 +77,7 @@ def test_ring_vrf_from_bytes():
     reconstructed_output = VRFOutput(output_bytes)
     
     # Verify reconstructed objects work
-    verifier = RingVRFVerifier(commitment)
+    verifier = RingVRFVerifier(commitment, len(ring_public_keys))
     result = verifier.verify(message, ad, reconstructed_output, reconstructed_proof)
     assert result is True
 
@@ -124,7 +124,7 @@ def test_ring_vrf_prove_verify():
     # Get commitment and create prover/verifier
     commitment = get_ring_commitment(ring_public_keys)
     prover = RingVRFProver(ring_public_keys, 0)
-    verifier = RingVRFVerifier(commitment)
+    verifier = RingVRFVerifier(commitment, len(ring_public_keys))
     
     # Generate and verify proof
     proof, output = prover.prove(key_pair1, message, ad)
@@ -151,7 +151,7 @@ def test_ring_vrf_invalid_index():
     # Test with index that doesn't match the key
     commitment = get_ring_commitment(ring_public_keys)
     prover = RingVRFProver(ring_public_keys, 1)
-    verifier = RingVRFVerifier(commitment)
+    verifier = RingVRFVerifier(commitment, len(ring_public_keys))
     
     proof, output = prover.prove(key_pair1, message, ad)
     with pytest.raises(ValueError):
@@ -183,7 +183,7 @@ def test_ring_vrf_different_message():
     # Get commitment and create prover/verifier
     commitment = get_ring_commitment(ring_public_keys)
     prover = RingVRFProver(ring_public_keys, 0)
-    verifier = RingVRFVerifier(commitment)
+    verifier = RingVRFVerifier(commitment, len(ring_public_keys))
     
     # Generate proof
     proof, output = prover.prove(key_pair1, message, ad)
@@ -223,7 +223,7 @@ def test_ring_vrf_different_ad():
     
     commitment = get_ring_commitment(ring_public_keys)
     prover = RingVRFProver(ring_public_keys, 0)
-    verifier = RingVRFVerifier(commitment)
+    verifier = RingVRFVerifier(commitment, len(ring_public_keys))
     
     proof, output = prover.prove(key_pair1, message, ad)
     
@@ -242,7 +242,7 @@ def test_ring_vrf_empty_message_and_ad():
     
     commitment = get_ring_commitment(ring_public_keys)
     prover = RingVRFProver(ring_public_keys, 0)
-    verifier = RingVRFVerifier(commitment)
+    verifier = RingVRFVerifier(commitment, len(ring_public_keys))
     
     proof, output = prover.prove(key_pair1, b"", b"")
     result = verifier.verify(b"", b"", output, proof)
@@ -262,7 +262,7 @@ def test_ring_vrf_large_message_and_ad():
     
     commitment = get_ring_commitment(ring_public_keys)
     prover = RingVRFProver(ring_public_keys, 0)
-    verifier = RingVRFVerifier(commitment)
+    verifier = RingVRFVerifier(commitment, len(ring_public_keys))
     
     proof, output = prover.prove(key_pair1, large_message, large_ad)
     result = verifier.verify(large_message, large_ad, output, proof)

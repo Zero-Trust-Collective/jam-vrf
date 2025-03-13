@@ -10,6 +10,9 @@ LATEST_PROFILE := $(shell find $(PROFILE_DIR) -name "*.prof" -type f -print0 | x
 build:
 	poetry run maturin build
 
+develop:
+	poetry run maturin develop
+
 test:
 	cargo test --no-default-features
 	poetry run pytest -n auto
