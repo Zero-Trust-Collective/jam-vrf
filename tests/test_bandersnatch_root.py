@@ -5,7 +5,7 @@ using the get_ring_commitment function.
 """
 
 import pytest
-from cryptography import KeyPairVRF, get_ring_commitment
+from pyvrfs import KeyPairVRF, get_ring_commitment
 
 def test_ring_commitment_no_epoch_change():
     """Test ring commitment generation with known input/output values."""

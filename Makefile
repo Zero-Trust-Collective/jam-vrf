@@ -29,4 +29,4 @@ profile:
 
 # Generate python docs
 docs:
-	poetry run pdoc cryptography -o docs
+	poetry run pdoc pyvrfs -o docs

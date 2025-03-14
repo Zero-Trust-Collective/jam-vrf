@@ -251,20 +251,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cryptography"
-version = "0.1.0"
-dependencies = [
- "ark-ec",
- "ark-ec-vrfs",
- "ark-ed-on-bls12-381-bandersnatch",
- "ark-ff",
- "ark-serialize",
- "ark-std",
- "hex",
- "pyo3",
-]
-
-[[package]]
 name = "derivative"
 version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -533,6 +519,20 @@ dependencies = [
  "pyo3-build-config",
  "quote",
  "syn 2.0.94",
+]
+
+[[package]]
+name = "pyvrfs"
+version = "0.1.0"
+dependencies = [
+ "ark-ec",
+ "ark-ec-vrfs",
+ "ark-ed-on-bls12-381-bandersnatch",
+ "ark-ff",
+ "ark-serialize",
+ "ark-std",
+ "hex",
+ "pyo3",
 ]
 
 [[package]]

@@ -1,11 +1,11 @@
-"""Tests for ring VRF functionality in the cryptography module.
+"""Tests for ring VRF functionality in the pyvrfs module.
 
 This module contains tests for the RingVRFProver and RingVRFVerifier classes,
 verifying their prove/verify functionality works as expected.
 """
 
 import pytest
-from cryptography import (
+from pyvrfs import (
     KeyPairVRF, RingVRFProver, RingVRFVerifier, VRFOutput, RingVRFProof,
     get_ring_commitment
 )

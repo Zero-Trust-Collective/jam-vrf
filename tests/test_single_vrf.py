@@ -1,11 +1,11 @@
-"""Tests for single VRF functionality in the cryptography module.
+"""Tests for single VRF functionality in the pyvrfs module.
 
 This module contains tests for the SingleVRFProver and SingleVRFVerifier classes,
 verifying their prove/verify functionality works as expected.
 """
 
 import pytest
-from cryptography import KeyPairVRF, SingleVRFProver, SingleVRFVerifier, VRFOutput, SingleVRFProof
+from pyvrfs import KeyPairVRF, SingleVRFProver, SingleVRFVerifier, VRFOutput, SingleVRFProof
 
 def test_single_vrf_proof_output_bytes():
     """Test accessing bytes from SingleVRFProof and VRFOutput.

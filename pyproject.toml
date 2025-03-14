@@ -1,5 +1,5 @@
 [project]
-name = "cryptography"
+name = "pyvrfs"
 version = "0.1.0"
 requires-python = ">=3.10"
 classifiers = [
@@ -8,9 +8,9 @@ classifiers = [
 ]
 
 [tool.poetry]
-name = "cryptography"
+name = "pyvrfs"
 version = "0.1.0"
-description = "This is a bindings module for exposing ark-ec-vrfs bandersnatch cryptography operations to a JAM python client"
+description = "Python bindings for the ark-ec-vrfs library"
 authors = ["0trust3r"]
 readme = "README.md"
 

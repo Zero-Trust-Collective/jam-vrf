@@ -391,7 +391,7 @@ impl RingVRFVerifier {
 
 /// Python module
 #[pymodule]
-fn cryptography(m: &Bound<'_, PyModule>) -> PyResult<()> {
+fn pyvrfs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<KeyPairVRF>()?;
     m.add_class::<VRFOutput>()?;
     m.add_class::<SingleVRFProof>()?;
