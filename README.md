@@ -4,7 +4,7 @@ Python bindings for the [ark-ec-vrfs library](https://github.com/davxy/ark-ec-vr
 
 ## Contributing
 
-to build, run `make develop`. To test, run `make test`
+run rust tests using `make test`
 
 ### Pushing Changes to tram
 

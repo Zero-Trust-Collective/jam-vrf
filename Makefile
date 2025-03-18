@@ -7,20 +7,15 @@ LATEST_PROFILE := $(shell find $(PROFILE_DIR) -name "*.prof" -type f -print0 | x
 
 .PHONY: build test profile docs
 
-build:
-	poetry run maturin build
-
-develop:
-	poetry run maturin develop
-
 test:
 	cargo test --no-default-features
-	poetry run pytest -n auto
+	uv sync
+	uv run pytest -n auto
 
 # Run python tests with profiling and save to latest.prof
 profile:
 	mkdir -p $(PROFILE_SUBDIR)
-	poetry run pytest -n auto --profile --profile-svg
+	uv run pytest -n auto --profile --profile-svg
 	@if [ -d prof ]; then \
 		cp prof/combined.prof $(PROFILE_SUBDIR)/$(TIME).prof; \
 		cp prof/combined.svg $(PROFILE_SUBDIR)/$(TIME).svg; \
@@ -29,4 +24,4 @@ profile:
 
 # Generate python docs
 docs:
-	poetry run pdoc pyvrfs -o docs
+	uv run pdoc pyvrfs -o docs
