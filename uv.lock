@@ -1,4 +1,5 @@
 version = 1
+revision = 1
 requires-python = ">=3.10"
 
 [[package]]
@@ -229,7 +230,7 @@ name = "pyvrfs"
 version = "0.1.0"
 source = { editable = "." }
 
-[package.optional-dependencies]
+[package.dev-dependencies]
 dev = [
     { name = "maturin" },
     { name = "pdoc" },
@@ -239,12 +240,14 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [
-    { name = "maturin", marker = "extra == 'dev'", specifier = ">=1.7.7" },
-    { name = "pdoc", marker = "extra == 'dev'", specifier = ">=15.0.0" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.3.4" },
-    { name = "pytest-profiling", marker = "extra == 'dev'", specifier = ">=1.7.0" },
-    { name = "pytest-xdist", marker = "extra == 'dev'", specifier = ">=3.6.1" },
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "maturin", specifier = ">=1.7.7" },
+    { name = "pdoc", specifier = ">=15.0.0" },
+    { name = "pytest", specifier = ">=8.3.4" },
+    { name = "pytest-profiling", specifier = ">=1.7.0" },
+    { name = "pytest-xdist", specifier = ">=3.6.1" },
 ]
 
 [[package]]
