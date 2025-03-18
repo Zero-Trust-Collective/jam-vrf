@@ -9,10 +9,9 @@ classifiers = [
     "Programming Language :: Rust",
     "Programming Language :: Python :: Implementation :: CPython"
 ]
-dependencies = [
-]
+dependencies = []
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
     "maturin>=1.7.7",
     "pytest>=8.3.4",
