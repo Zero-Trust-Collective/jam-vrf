@@ -37,9 +37,8 @@ fn test_single_signature_vrf() {
                 ad,
                 &reconstructed_output,
                 &reconstructed_proof,
-            )
-            .unwrap();
-        assert!(result);
+            );
+        assert!(result.is_ok());
     });
 }
 
@@ -88,9 +87,8 @@ fn test_ring_signature_vrf() {
         let verifier =
             RingVRFVerifier::new(commitment.as_bytes(py), ring_public_keys.len()).unwrap();
         let result = verifier
-            .verify(data, ad, &reconstructed_output, &reconstructed_proof)
-            .unwrap();
-        assert!(result);
+            .verify(data, ad, &reconstructed_output, &reconstructed_proof);
+        assert!(result.is_ok());
     });
 }
 

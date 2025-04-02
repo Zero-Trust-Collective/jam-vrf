@@ -78,8 +78,7 @@ def test_ring_vrf_from_bytes():
     
     # Verify reconstructed objects work
     verifier = RingVRFVerifier(commitment, len(ring_public_keys))
-    result = verifier.verify(message, ad, reconstructed_output, reconstructed_proof)
-    assert result is True
+    verifier.verify(message, ad, reconstructed_output, reconstructed_proof)
 
 def test_ring_vrf_invalid_bytes():
     """Test error handling when creating from invalid bytes."""
@@ -128,8 +127,7 @@ def test_ring_vrf_prove_verify():
     
     # Generate and verify proof
     proof, output = prover.prove(key_pair1, message, ad)
-    result = verifier.verify(message, ad, output, proof)
-    assert result is True
+    verifier.verify(message, ad, output, proof)
 
 def test_jam_ticket_verify():
     """Test ring VRF verification of a jam ticket.
@@ -270,8 +268,7 @@ def test_ring_vrf_empty_message_and_ad():
     verifier = RingVRFVerifier(commitment, len(ring_public_keys))
     
     proof, output = prover.prove(key_pair1, b"", b"")
-    result = verifier.verify(b"", b"", output, proof)
-    assert result is True
+    verifier.verify(b"", b"", output, proof)
 
 def test_ring_vrf_large_message_and_ad():
     """Test ring VRF with large message and additional data."""
@@ -290,5 +287,4 @@ def test_ring_vrf_large_message_and_ad():
     verifier = RingVRFVerifier(commitment, len(ring_public_keys))
     
     proof, output = prover.prove(key_pair1, large_message, large_ad)
-    result = verifier.verify(large_message, large_ad, output, proof)
-    assert result is True
+    verifier.verify(large_message, large_ad, output, proof)

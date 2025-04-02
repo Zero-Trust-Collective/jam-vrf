@@ -256,15 +256,14 @@ impl SingleVRFVerifier {
         ad: &[u8],
         output: &VRFOutput,
         proof: &SingleVRFProof,
-    ) -> Result<bool, CryptoError> {
+    ) -> Result<(), CryptoError> {
         let public = Public::deserialize_compressed(&public_key_bytes[..])
             .map_err(wrap_serialization_error)?;
         let input = Input::new(data).ok_or(CryptoError::InvalidInput(
             "Failed to create VRF input from data".to_string(),
         ))?;
         IetfVerifier::verify(&public, input, output.output, ad, &proof.proof)
-            .map_err(wrap_vrf_error)?;
-        Ok(true)
+            .map_err(wrap_vrf_error)
     }
 }
 
@@ -365,7 +364,7 @@ impl RingVRFVerifier {
         ad: &[u8],
         output: &VRFOutput,
         proof: &RingVRFProof,
-    ) -> Result<bool, CryptoError> {
+    ) -> Result<(), CryptoError> {
         let input = Input::new(data).ok_or_else(|| {
             CryptoError::InvalidInput("Failed to create VRF input from data".to_string())
         })?;
@@ -377,9 +376,7 @@ impl RingVRFVerifier {
             &proof.proof,
             &self.verifier,
         )
-        .map_err(wrap_vrf_error)?;
-
-        Ok(true)
+        .map_err(wrap_vrf_error)
     }
 }
 

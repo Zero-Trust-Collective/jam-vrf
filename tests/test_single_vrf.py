@@ -62,8 +62,7 @@ def test_single_vrf_from_bytes():
     # Verify reconstructed objects work
     public_key_bytes = key_pair.public_key_bytes()
     verifier = SingleVRFVerifier()
-    result = verifier.verify(public_key_bytes, message, ad, reconstructed_output, reconstructed_proof)
-    assert result is True
+    verifier.verify(public_key_bytes, message, ad, reconstructed_output, reconstructed_proof)
 
 def test_single_vrf_invalid_bytes():
     """Test error handling when creating from invalid bytes."""
@@ -104,8 +103,7 @@ def test_single_vrf_prove_verify():
     
     # Verify the proof
     verifier = SingleVRFVerifier()
-    result = verifier.verify(public_key_bytes, message, ad, output, proof)
-    assert result is True
+    verifier.verify(public_key_bytes, message, ad, output, proof)
 
 def test_single_vrf_different_message():
     """Test SingleVRF verify fails with different message.
@@ -159,8 +157,7 @@ def test_single_vrf_empty_message_and_ad():
     verifier = SingleVRFVerifier()
     
     proof, output = prover.prove(key_pair, b"", b"")
-    result = verifier.verify(key_pair.public_key_bytes(), b"", b"", output, proof)
-    assert result is True
+    verifier.verify(key_pair.public_key_bytes(), b"", b"", output, proof)
 
 def test_single_vrf_large_message_and_ad():
     """Test SingleVRF with large message and additional data."""
@@ -172,5 +169,4 @@ def test_single_vrf_large_message_and_ad():
     verifier = SingleVRFVerifier()
     
     proof, output = prover.prove(key_pair, large_message, large_ad)
-    result = verifier.verify(key_pair.public_key_bytes(), large_message, large_ad, output, proof)
-    assert result is True
+    verifier.verify(key_pair.public_key_bytes(), large_message, large_ad, output, proof)
