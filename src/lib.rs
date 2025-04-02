@@ -1,19 +1,20 @@
-use ark_ec_vrfs::{
+use ark_serialize::{CanonicalDeserialize, CanonicalSerialize, SerializationError};
+use ark_vrf::{
     ietf::{Prover as IetfProver, Verifier as IetfVerifier},
-    prelude::ark_serialize,
+    reexports::ark_serialize,
     ring::{Prover as RingProver, RingCommitment, Verifier as RingVerifier},
-    suites::bandersnatch::edwards as bandersnatch,
-    suites::bandersnatch::edwards::RingContext,
+    suites::bandersnatch,
     Error as VrfError,
 };
-use ark_serialize::{CanonicalDeserialize, CanonicalSerialize, SerializationError};
 use bandersnatch::{
     AffinePoint, BandersnatchSha512Ell2, IetfProof, Input, Output, Public, RingProof,
-    RingProver as BandersnatchRingProver, RingVerifier as BandersnatchRingVerifier, Secret,
+    RingProofParams, RingProver as BandersnatchRingProver,
+    RingVerifier as BandersnatchRingVerifier, Secret,
 };
 use pyo3::exceptions::{PyRuntimeError, PyValueError};
 use pyo3::prelude::*;
 use pyo3::types::PyBytes;
+use srs::get_pcs_params;
 
 mod srs;
 #[cfg(test)]
@@ -69,13 +70,6 @@ impl From<CryptoError> for PyErr {
     }
 }
 
-/// Get RingContext with proper SRS parameters
-fn get_ring_context(ring_size: usize) -> Result<RingContext, CryptoError> {
-    let pcs_params = srs::get_pcs_params();
-    RingContext::from_srs(ring_size, pcs_params)
-        .map_err(|_| CryptoError::InvalidInput("Failed to create ring context".to_string()))
-}
-
 /// Create a commitment from a list of public keys
 #[pyfunction]
 fn get_ring_commitment(py: Python<'_>, public_keys: Vec<Vec<u8>>) -> PyResult<Py<PyBytes>> {
@@ -83,15 +77,20 @@ fn get_ring_commitment(py: Python<'_>, public_keys: Vec<Vec<u8>>) -> PyResult<Py
         return Err(PyValueError::new_err("Public keys list cannot be empty"));
     }
 
-    let ring_ctx = get_ring_context(public_keys.len())?;
-    let padding_point = ring_ctx.padding_point();
+    let pc_params = get_pcs_params();
+
+    let params = RingProofParams::from_pcs_params(public_keys.len(), pc_params)
+        .map_err(|e| PyValueError::new_err(format!("unable to initialize ring params: {:?}", e)))?;
 
     let parsed_keys: Vec<AffinePoint> = public_keys
         .iter()
-        .map(|pk_bytes| AffinePoint::deserialize_compressed(&pk_bytes[..]).unwrap_or(padding_point))
+        .map(|pk_bytes| {
+            AffinePoint::deserialize_compressed(&pk_bytes[..])
+                .unwrap_or(RingProofParams::padding_point())
+        })
         .collect();
 
-    let verifier_key = ring_ctx.verifier_key(&parsed_keys);
+    let verifier_key = params.verifier_key(&parsed_keys);
     let commitment = verifier_key.commitment();
 
     let mut bytes = Vec::new();
@@ -286,13 +285,18 @@ impl RingVRFProver {
             ));
         }
 
-        let ring_ctx = get_ring_context(public_keys.len())?;
-        let padding_point = ring_ctx.padding_point();
+        let pc_params = get_pcs_params();
+
+        let params =
+            RingProofParams::from_pcs_params(public_keys.len(), pc_params).map_err(|e| {
+                CryptoError::InvalidInput(format!("unable to initialize ring params: {:?}", e))
+            })?;
 
         let parsed_keys: Vec<AffinePoint> = public_keys
             .iter()
             .map(|pk_bytes| {
-                AffinePoint::deserialize_compressed(&pk_bytes[..]).unwrap_or(padding_point)
+                AffinePoint::deserialize_compressed(&pk_bytes[..])
+                    .unwrap_or(RingProofParams::padding_point())
             })
             .collect();
 
@@ -303,8 +307,8 @@ impl RingVRFProver {
             ));
         }
 
-        let prover_key = ring_ctx.prover_key(&parsed_keys);
-        let prover = ring_ctx.prover(prover_key, ring_index);
+        let prover_key = params.prover_key(&parsed_keys);
+        let prover = params.prover(prover_key, ring_index);
 
         Ok(Self { prover })
     }
@@ -342,9 +346,14 @@ impl RingVRFVerifier {
             <RingCommitment<BandersnatchSha512Ell2>>::deserialize_compressed(&commitment_bytes[..])
                 .map_err(wrap_serialization_error)?;
 
-        let ring_ctx = get_ring_context(ring_size)?;
-        let verifier_key = ring_ctx.verifier_key_from_commitment(commitment);
-        let verifier = ring_ctx.verifier(verifier_key);
+        let pc_params = get_pcs_params();
+
+        let params = RingProofParams::from_pcs_params(ring_size, pc_params).map_err(|e| {
+            CryptoError::InvalidInput(format!("unable to initialize ring params: {:?}", e))
+        })?;
+
+        let verifier_key = params.verifier_key_from_commitment(commitment);
+        let verifier = params.verifier(verifier_key);
 
         Ok(Self { verifier })
     }
