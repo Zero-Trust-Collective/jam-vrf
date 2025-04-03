@@ -1,4 +1,4 @@
-from pyvrfs import (
+from pyvrf import (
     RingVRFVerifier, VRFOutput, RingVRFProof,
     get_ring_commitment
 )

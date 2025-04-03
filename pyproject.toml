@@ -1,5 +1,5 @@
 [project]
-name = "pyvrfs"
+name = "pyvrf"
 version = "0.1.0"
 description = "Python bindings for the ark-vrf library"
 authors = [{name = "0trust3r"}]

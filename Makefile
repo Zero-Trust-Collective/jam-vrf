@@ -6,4 +6,4 @@ test:
 	pytest -n auto
 
 docs:
-	pdoc pyvrfs -o docs -d markdown
+	pdoc pyvrf -o docs -d markdown

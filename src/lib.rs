@@ -263,7 +263,7 @@ impl RingVRFVerifier {
 
 /// Python module
 #[pymodule]
-fn pyvrfs(m: &Bound<'_, PyModule>) -> PyResult<()> {
+fn pyvrf(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<VRFOutput>()?;
     m.add_class::<SingleVRFProof>()?;
     m.add_class::<RingVRFProof>()?;

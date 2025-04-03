@@ -1,4 +1,4 @@
-from pyvrfs import (
+from pyvrf import (
     SingleVRFProof, SingleVRFVerifier, VRFOutput
 )
 
