@@ -7,7 +7,7 @@ use std::sync::OnceLock;
 static SRS_PARAMS: OnceLock<ring::PcsParams<BandersnatchSha512Ell2>> = OnceLock::new();
 
 // Embed the parameters file directly into the binary
-const SRS_BYTES: &[u8] = include_bytes!(concat!(
+const SRS: &[u8] = include_bytes!(concat!(
     env!("CARGO_MANIFEST_DIR"),
     "/parameters/zcash-srs-2-11-uncompressed.bin"
 ));
@@ -15,7 +15,7 @@ const SRS_BYTES: &[u8] = include_bytes!(concat!(
 pub fn get_pcs_params() -> ring::PcsParams<BandersnatchSha512Ell2> {
     SRS_PARAMS
         .get_or_init(|| {
-            ring::PcsParams::<BandersnatchSha512Ell2>::deserialize_uncompressed(&SRS_BYTES[..])
+            ring::PcsParams::<BandersnatchSha512Ell2>::deserialize_uncompressed(&SRS[..])
                 .expect("Failed to deserialize embedded SRS parameters")
         })
         .clone()
