@@ -1,6 +1,6 @@
 # pyvrf
 
-A lightweight python bindings library for [bandersnatch vrf signatures](https://github.com/davxy/bandersnatch-vrf-spec) using the [ark-vrf crate](https://crates.io/crates/ark-vrf).
+A lightweight python bindings library for [bandersnatch vrf](https://github.com/davxy/bandersnatch-vrf-spec) signatures using the [ark-vrf](https://crates.io/crates/ark-vrf) crate.
 
 ## Examples
 
