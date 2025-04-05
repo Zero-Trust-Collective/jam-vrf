@@ -1,10 +1,9 @@
 use crate::errors::{wrap_serialization_error, wrap_vrf_error, CryptoError};
 use crate::vrf_output::VRFOutput;
-use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
+use ark_serialize::CanonicalDeserialize;
 use ark_vrf::{ietf::Verifier as IetfVerifier, reexports::ark_serialize, suites::bandersnatch};
 use bandersnatch::{IetfProof as ArkVrfIetfVRFProof, Input, Public};
 use pyo3::prelude::*;
-use pyo3::types::PyBytes;
 
 /// VRF proof for ietf signatures
 #[pyclass]
@@ -17,15 +16,6 @@ impl IetfVRFProof {
         let proof = ArkVrfIetfVRFProof::deserialize_compressed(&bytes[..])
             .map_err(wrap_serialization_error)?;
         Ok(Self(proof))
-    }
-
-    /// Get the serialized bytes
-    fn bytes<'py>(&self, py: Python<'py>) -> Result<Py<PyBytes>, CryptoError> {
-        let mut bytes = Vec::new();
-        self.0
-            .serialize_compressed(&mut bytes)
-            .map_err(wrap_serialization_error)?;
-        Ok(PyBytes::new(py, &bytes).into())
     }
 }
 
