@@ -3,13 +3,10 @@ from pyvrf import (
 )
 
 def test_ring_signature_verification():
-    """Verify ring VRF signature of a jam ticket.
+    """
+    Verify ring VRF signature of a jam ticket.
     
     testvector sourced from: https://github.com/davxy/jam-test-vectors/blob/polkajam-vectors/safrole/tiny/publish-tickets-no-mark-6.json
-    
-    This test:
-    1. creates a RingVRFVerifier from a commitment & ring size
-    2. Verifies a ticket signature
     """
 
     # ticket vector
@@ -19,9 +16,15 @@ def test_ring_signature_verification():
     entropy = bytes.fromhex("bb30a42c1e62f0afda5f0a4e8a562f7a13a24cea00ee81917b86b89e801314aa")
     ring_size = 6
 
+    # construct ring verifier
+    verifier = RingVRFVerifier(ring_root, ring_size)
+    test = list(b"jam_ticket_seal" + entropy + bytes([attempt]))
+    print(test)
+
+    
     # verify signature
-    RingVRFVerifier(ring_root, ring_size).verify(
-        "jam_ticket_seal".encode() + entropy + bytes([attempt]),
+    verifier.verify(
+        b"jam_ticket_seal" + entropy + bytes([attempt]),
         b"",
         VRFOutput(signature[:32]),
         RingVRFProof(signature[32:]),
