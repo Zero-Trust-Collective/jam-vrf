@@ -2,6 +2,7 @@
 
 build:
 	uv sync
+	maturin develop
 	maturin build
 
 test:
