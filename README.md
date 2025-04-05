@@ -7,12 +7,13 @@ Lightweight python bindings over the [ark-vrf](https://crates.io/crates/ark-vrf)
 ### Verifying an ietf signature
 
 ```
+from pyvrf import ietf_verify
+
 public_key = bytes.fromhex("b0e1f208f9d6e5b310b92014ea7ef3011e649dab038804759f3766e01029d623")
 data = bytes.fromhex("42616e646572736e6174636820766563746f72")
 ad = bytes.fromhex("1f42")
-output = VRFOutput(bytes.fromhex("6d1dd583bea262323c7dc9e94e57a472e09874e435719010eeafae503c433f16"))
-proof = IetfVRFProof(bytes.fromhex("6dbeeab9648505fa6a95de52d611acfbb2febacc58cdc7d0ca45abd8c952ef12ce7f4a2354a6c3f97aee6cc60c6aa4c4430b12ed0f0ef304b326c776618d7609"))
-ietf_verify(public_key, data, ad, output, proof)
+signature = bytes.fromhex("6d1dd583bea262323c7dc9e94e57a472e09874e435719010eeafae503c433f166dbeeab9648505fa6a95de52d611acfbb2febacc58cdc7d0ca45abd8c952ef12ce7f4a2354a6c3f97aee6cc60c6aa4c4430b12ed0f0ef304b326c776618d7609")
+ietf_verify(public_key, data, ad, signature)
 ```
 
 ### Generating a ring commitment
