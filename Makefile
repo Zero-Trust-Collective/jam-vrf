@@ -10,4 +10,4 @@ test:
 	pytest -n auto
 
 docs:
-	pdoc pyvrf -o docs
+	pdoc jam_vrf -o docs

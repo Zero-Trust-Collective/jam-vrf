@@ -1,7 +1,4 @@
-from pyvrf import (
-    RingVRFVerifier, VRFOutput, RingVRFProof,
-    get_ring_commitment
-)
+from jam_vrf import RingVerifier, get_ring_commitment
 
 def test_ring_commitment():
     # test vector sourced from: https://github.com/davxy/bandersnatch-vrf-spec/blob/6b1ceba5b3cbc834201732bcdad1377e19e9283e/assets/vectors/bandersnatch_sha-512_ell2_ring.json#L123
@@ -20,9 +17,9 @@ def test_ring_commitment():
     # expected output commitment
     expected_commitment = bytes.fromhex("a359e70e307799b111ad89b162b4260fb4a96ebf4232e8b02d396033498d4216305ed9cff3584a4c68f03ab3df87243a80bfc965633efc23c82ca064afe105baacccbf23e47b543d16c3c4466a83242a77acc16f79b8710051b5e97c85319cf392e630ae2b14e758ab0960e372172203f4c9a41777dadd529971d7ab9d23ab29fe0e9c85ec450505dde7f5ac038274cf")
 
-    result = get_ring_commitment(public_keys)
+    commitment = get_ring_commitment(public_keys)
     
-    assert result == expected_commitment, f"Expected {expected_commitment.hex()}, but got {result.hex()}"
+    assert commitment == expected_commitment, f"Expected {expected_commitment.hex()}, but got {result.hex()}"
 
 
 def test_ring_signature_verify():
@@ -40,12 +37,11 @@ def test_ring_signature_verify():
     ring_size = 6
 
     # construct ring verifier
-    verifier = RingVRFVerifier(ring_root, ring_size)
+    verifier = RingVerifier(ring_root, ring_size)
 
     # verify signature
     verifier.verify(
         b"jam_ticket_seal" + entropy + bytes([attempt]),
         b"",
-        VRFOutput(signature[:32]),
-        RingVRFProof(signature[32:]),
+        signature
     )

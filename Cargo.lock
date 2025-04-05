@@ -523,6 +523,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "jam_vrf"
+version = "0.1.0"
+dependencies = [
+ "ark-ec 0.4.2",
+ "ark-ed-on-bls12-381-bandersnatch 0.4.0",
+ "ark-ff 0.4.2",
+ "ark-serialize 0.4.2",
+ "ark-std 0.4.0",
+ "ark-vrf",
+ "hex",
+ "pyo3",
+]
+
+[[package]]
 name = "keccak"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -683,20 +697,6 @@ dependencies = [
  "pyo3-build-config",
  "quote",
  "syn 2.0.94",
-]
-
-[[package]]
-name = "pyvrf"
-version = "0.1.0"
-dependencies = [
- "ark-ec 0.4.2",
- "ark-ed-on-bls12-381-bandersnatch 0.4.0",
- "ark-ff 0.4.2",
- "ark-serialize 0.4.2",
- "ark-std 0.4.0",
- "ark-vrf",
- "hex",
- "pyo3",
 ]
 
 [[package]]

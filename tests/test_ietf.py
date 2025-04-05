@@ -1,4 +1,4 @@
-from pyvrf import ietf_verify
+from jam_vrf import ietf_verify
 
 def test_ietf_signature_verify():
     # vector 7 from https://github.com/davxy/bandersnatch-vrf-spec/blob/6b1ceba5b3cbc834201732bcdad1377e19e9283e/assets/vectors/bandersnatch_sha-512_ell2_ietf.json#L81

@@ -2,9 +2,10 @@ use crate::errors::{wrap_serialization_error, wrap_vrf_error, CryptoError};
 use crate::vrf_output::VRFOutput;
 use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
 use ark_vrf::reexports::ark_serialize;
-use ark_vrf::ring::Verifier;
+use ark_vrf::ring::Verifier as VerifierTrait;
 use ark_vrf::suites::bandersnatch::{
-    AffinePoint, Input, PcsParams, Public, RingCommitment, RingProof, RingProofParams, RingVerifier,
+    AffinePoint, Input, PcsParams, Public, RingCommitment, RingProof, RingProofParams,
+    RingVerifier as ArkRingVerifier,
 };
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
@@ -19,6 +20,7 @@ const SRS: &[u8] = include_bytes!(concat!(
     "/parameters/zcash-srs-2-11-uncompressed.bin"
 ));
 
+/// Get the polynomial commitment scheme paramaters used in JAM
 fn get_pcs_params() -> PcsParams {
     SRS_PARAMS
         .get_or_init(|| {
@@ -31,15 +33,19 @@ fn get_pcs_params() -> PcsParams {
 /// Create a commitment from a list of public keys
 #[pyfunction]
 pub fn get_ring_commitment(py: Python<'_>, public_keys: Vec<Vec<u8>>) -> PyResult<Py<PyBytes>> {
+    // verify the ring isn't empty
     if public_keys.is_empty() {
         return Err(PyValueError::new_err("Public keys list cannot be empty"));
     }
 
+    // get the pcs paramaters
     let pc_params = get_pcs_params();
 
+    // construct the ring parameters
     let params = RingProofParams::from_pcs_params(public_keys.len(), pc_params)
         .map_err(|e| PyValueError::new_err(format!("unable to initialize ring params: {:?}", e)))?;
 
+    // deserialize the keys, substituting the padding point for any invalid keys
     let parsed_keys: Vec<AffinePoint> = public_keys
         .iter()
         .map(|pk| {
@@ -47,79 +53,71 @@ pub fn get_ring_commitment(py: Python<'_>, public_keys: Vec<Vec<u8>>) -> PyResul
         })
         .collect();
 
+    // construct verifier key
     let verifier_key = params.verifier_key(&parsed_keys);
-    let commitment = verifier_key.commitment();
 
+    // return serialized commitment
+    let commitment = verifier_key.commitment();
     let mut bytes = Vec::new();
     commitment
         .serialize_compressed(&mut bytes)
         .map_err(|e| PyValueError::new_err(format!("Failed to serialize commitment: {}", e)))?;
-
     Ok(PyBytes::new(py, &bytes).into())
-}
-
-/// VRF proof for ring signatures
-#[pyclass]
-pub struct RingVRFProof {
-    proof: RingProof,
-}
-
-#[pymethods]
-impl RingVRFProof {
-    #[new]
-    fn new(bytes: &[u8]) -> Result<Self, CryptoError> {
-        let proof =
-            RingProof::deserialize_compressed(&bytes[..]).map_err(wrap_serialization_error)?;
-        Ok(Self { proof })
-    }
 }
 
 /// VRF verifier for ring signatures
 #[pyclass]
-pub struct RingVRFVerifier {
-    verifier: RingVerifier,
-}
+pub struct RingVerifier(ArkRingVerifier);
 
 #[pymethods]
-impl RingVRFVerifier {
-    /// Create a new ring verifier from a commitment & ring size
+impl RingVerifier {
+    /// Construct a ring verifier from a commitment & ring size
     #[new]
     fn new(commitment: &[u8], ring_size: usize) -> Result<Self, CryptoError> {
+        // deserialize commitment
         let commitment = RingCommitment::deserialize_compressed(&commitment[..])
             .map_err(wrap_serialization_error)?;
 
+        // get pcs parameters
         let pc_params = get_pcs_params();
 
         let params = RingProofParams::from_pcs_params(ring_size, pc_params).map_err(|e| {
             CryptoError::InvalidInput(format!("unable to initialize ring params: {:?}", e))
         })?;
 
+        // construct & return verifier
         let verifier_key = params.verifier_key_from_commitment(commitment);
         let verifier = params.verifier(verifier_key);
-
-        Ok(Self { verifier })
+        Ok(Self(verifier))
     }
 
     /// Verify a ring VRF signature
-    fn verify(
-        &self,
-        data: &[u8],
-        ad: &[u8],
-        output: &VRFOutput,
-        proof: &RingVRFProof,
-    ) -> Result<(), CryptoError> {
+    fn verify(&self, data: &[u8], ad: &[u8], signature: &[u8]) -> PyResult<()> {
+        // construct vrf input
         let input = Input::new(data).ok_or_else(|| {
             CryptoError::InvalidInput("Failed to create VRF input from data".to_string())
         })?;
 
-        Public::verify(input, output.output, ad, &proof.proof, &self.verifier)
-            .map_err(wrap_vrf_error)
+        // construct vrf output
+        let output = VRFOutput::new(signature.get(..32).ok_or(PyValueError::new_err(
+            "Unable to extract output from signature",
+        ))?)?;
+
+        // deserialize proof
+        let proof = RingProof::deserialize_compressed(signature.get(32..).ok_or(
+            PyValueError::new_err("Unable to extract proof from signature"),
+        )?)
+        .map_err(wrap_serialization_error)?;
+
+        // verify signature
+        Public::verify(input, output.0, ad, &proof, &self.0).map_err(wrap_vrf_error)?;
+        Ok(())
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{get_ring_commitment, RingVRFProof, RingVRFVerifier, VRFOutput};
+    use super::{get_ring_commitment, RingVerifier};
     use pyo3::Python;
 
     #[test]
@@ -167,18 +165,16 @@ mod tests {
         let ring_size = 6;
 
         // construct ring verifier
-        let verifier = RingVRFVerifier::new(&ring_root, ring_size).unwrap();
+        let verifier = RingVerifier::new(&ring_root, ring_size).unwrap();
 
         // verify signature
         let mut data = Vec::new();
         data.extend_from_slice(b"jam_ticket_seal");
         data.extend_from_slice(entropy.as_slice());
         data.push(1);
-        print!("{:?}", data);
-        let vrf_output = VRFOutput::new(signature.get(..32).unwrap()).unwrap();
-        let vrf_proof = RingVRFProof::new(signature.get(32..).unwrap()).unwrap();
         let ad = b"";
-        let result = verifier.verify(&data, ad, &vrf_output, &vrf_proof);
-        assert!(result.is_ok());
+        verifier
+            .verify(&data, ad, &signature)
+            .expect("signature verification should pass");
     }
 }

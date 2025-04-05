@@ -6,7 +6,7 @@ use ark_vrf::suites::bandersnatch::{IetfProof, Input, Public};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 
-/// Verify an IETF signature over some data & ad by a given public key
+/// Verify an IETF signature of some data & ad by a given public key
 #[pyfunction]
 pub fn ietf_verify(public_key: &[u8], data: &[u8], ad: &[u8], signature: &[u8]) -> PyResult<()> {
     // deserialize public key
@@ -30,7 +30,7 @@ pub fn ietf_verify(public_key: &[u8], data: &[u8], ad: &[u8], signature: &[u8]) 
     .map_err(wrap_serialization_error)?;
 
     // verify signature
-    Verifier::verify(&public, input, output.output, ad, &proof).map_err(wrap_vrf_error)?;
+    Verifier::verify(&public, input, output.0, ad, &proof).map_err(wrap_vrf_error)?;
     Ok(())
 }
 
@@ -49,7 +49,8 @@ mod tests {
         let signature = hex::decode("6d1dd583bea262323c7dc9e94e57a472e09874e435719010eeafae503c433f166dbeeab9648505fa6a95de52d611acfbb2febacc58cdc7d0ca45abd8c952ef12ce7f4a2354a6c3f97aee6cc60c6aa4c4430b12ed0f0ef304b326c776618d7609")
                 .unwrap();
 
-        // Create verifier and verify reconstructed proof and output
-        ietf_verify(&public_key, &data, &ad, &signature).expect("signature verify failed");
+        // verify signature
+        ietf_verify(&public_key, &data, &ad, &signature)
+            .expect("signature verification should pass");
     }
 }
