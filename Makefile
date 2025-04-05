@@ -1,8 +1,11 @@
-.PHONY: test docs
+.PHONY: build test docs
+
+build:
+	uv sync
+	maturin build
 
 test:
 	cargo test --no-default-features
-	uv sync
 	pytest -n auto
 
 docs:

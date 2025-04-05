@@ -5,7 +5,7 @@ use bandersnatch::{AffinePoint, Output};
 use pyo3::prelude::*;
 use pyo3::types::PyBytes;
 
-/// VRF output type shared between single and ring VRF implementations
+/// VRF output type shared between ietf and ring VRF implementations
 #[pyclass]
 pub struct VRFOutput {
     pub output: Output,
