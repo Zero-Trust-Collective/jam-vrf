@@ -1,6 +1,6 @@
 # jam-vrf
 
-Lightweight python bindings over the [ark-vrf](https://crates.io/crates/ark-vrf) crate for verifying JAM vrf signatures
+Lightweight python bindings over the [ark-vrf](https://crates.io/crates/ark-vrf) crate for verifying JAM vrf signatures.
 
 ## Examples
 
@@ -14,7 +14,10 @@ data = bytes.fromhex("42616e646572736e6174636820766563746f72")
 ad = bytes.fromhex("1f42")
 signature = bytes.fromhex("6d1dd583bea262323c7dc9e94e57a472e09874e435719010eeafae503c433f166dbeeab9648505fa6a95de52d611acfbb2febacc58cdc7d0ca45abd8c952ef12ce7f4a2354a6c3f97aee6cc60c6aa4c4430b12ed0f0ef304b326c776618d7609")
 
-ietf_verify(public_key, data, ad, signature)
+try:
+    ietf_verify(public_key, data, ad, signature)
+except ValueError as e:
+    print("invalid signature!")
 ```
 
 ### Generating a ring commitment
@@ -52,9 +55,12 @@ ring_size = 6
 verifier = RingVRFVerifier(ring_root, ring_size)
 
 # verify signature
-verifier.verify(
-    b"jam_ticket_seal" + entropy + bytes([attempt]),
-    b"",
-    signature
-)
+try:
+    verifier.verify(
+        b"jam_ticket_seal" + entropy + bytes([attempt]),
+        b"",
+        signature
+    )
+except ValueError as e:
+    print("invalid signature!")
 ```

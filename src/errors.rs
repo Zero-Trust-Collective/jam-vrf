@@ -1,6 +1,6 @@
 use ark_serialize::SerializationError;
 use ark_vrf::{reexports::ark_serialize, Error as VrfError};
-use pyo3::exceptions::{PyRuntimeError, PyValueError};
+use pyo3::exceptions::{PyException, PyValueError};
 use pyo3::prelude::*;
 
 /// Wrapper for VrfError to satisfy orphan rules
@@ -41,13 +41,13 @@ impl From<CryptoError> for PyErr {
             )) => PyValueError::new_err("Not enough space for serialization"),
             CryptoError::SerializationError(SerializationErrorWrapper(
                 SerializationError::InvalidData,
-            )) => PyValueError::new_err("Invalid serialized data format"),
+            )) => PyValueError::new_err("Invalid VRF data"),
             CryptoError::SerializationError(SerializationErrorWrapper(
                 SerializationError::UnexpectedFlags,
-            )) => PyRuntimeError::new_err("Unknown serialization error"),
+            )) => PyException::new_err("Internal error, this is likely a bug in jam_vrf"),
             CryptoError::SerializationError(SerializationErrorWrapper(
                 SerializationError::IoError(_),
-            )) => PyRuntimeError::new_err("IO error during serialization"),
+            )) => PyException::new_err("IO error during serialization"),
             CryptoError::InvalidInput(data) => PyValueError::new_err(data),
         }
     }

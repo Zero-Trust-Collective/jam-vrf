@@ -1,4 +1,5 @@
 from jam_vrf import RingVerifier, get_ring_commitment
+import pytest
 
 def test_ring_commitment():
     # test vector sourced from: https://github.com/davxy/bandersnatch-vrf-spec/blob/6b1ceba5b3cbc834201732bcdad1377e19e9283e/assets/vectors/bandersnatch_sha-512_ell2_ring.json#L123
@@ -14,17 +15,16 @@ def test_ring_commitment():
         bytes.fromhex("3f9dc0c4f67f207974123830c2d66988fb3fb44becbbba5a64143f376edc51d9")
     ]
 
-    # expected output commitment
-    expected_commitment = bytes.fromhex("a359e70e307799b111ad89b162b4260fb4a96ebf4232e8b02d396033498d4216305ed9cff3584a4c68f03ab3df87243a80bfc965633efc23c82ca064afe105baacccbf23e47b543d16c3c4466a83242a77acc16f79b8710051b5e97c85319cf392e630ae2b14e758ab0960e372172203f4c9a41777dadd529971d7ab9d23ab29fe0e9c85ec450505dde7f5ac038274cf")
-
     commitment = get_ring_commitment(public_keys)
-    
-    assert commitment == expected_commitment, f"Expected {expected_commitment.hex()}, but got {result.hex()}"
+
+    # verify commitment
+    expected_commitment = bytes.fromhex("a359e70e307799b111ad89b162b4260fb4a96ebf4232e8b02d396033498d4216305ed9cff3584a4c68f03ab3df87243a80bfc965633efc23c82ca064afe105baacccbf23e47b543d16c3c4466a83242a77acc16f79b8710051b5e97c85319cf392e630ae2b14e758ab0960e372172203f4c9a41777dadd529971d7ab9d23ab29fe0e9c85ec450505dde7f5ac038274cf")
+    assert commitment == expected_commitment
 
 
-def test_ring_signature_verify():
+def test_valid_ring_sig():
     """
-    Verify ring VRF signature of a jam ticket.
+    Verify ring VRF signature of a valid jam ticket.
     
     testvector sourced from: https://github.com/davxy/jam-test-vectors/blob/polkajam-vectors/safrole/tiny/publish-tickets-no-mark-6.json
     """
@@ -45,3 +45,28 @@ def test_ring_signature_verify():
         b"",
         signature
     )
+
+def test_invalid_ring_sig():
+    """
+    Verify ring VRF signature of an invalid jam ticket.
+    
+    testvector sourced from: https://github.com/davxy/jam-test-vectors/blob/polkajam-vectors/safrole/tiny/publish-tickets-no-mark-6.json
+    """
+
+    # safrole ticket
+    attempt = 1
+    signature = bytes.fromhex("1dfb7b61deee0c4a6899c1123e9e362f2b965079be576aebda0b7ac5e111186e45649b3aa58e18cb4faa3cc74688a322fcd5ab4d591dc2e183f4e31f3f5b926fefcb067f0b43fc9bda32af4bdcbf8767945d01e9816327857a3537929a304eea39fa798e7a8327dcba940ffa77659b1850f877be7a439fc3a66191299d5ae9240e005d84cfbd9fe9a1b250873d484fdf90a03e6b3238a3143f3692ef3128cf1961c8246ca93c957ea7907f7d1dd80e745ecada3f48dbdcbf14dca402df264303a445e67a96d618c4fc1c100a69fa449cca1db6a7ac609d7bd04107f685411aa1bebecdb3897ed0d6c00b46a56381e5968b7520b215677afa1394464057709837dfb22b04b53c69011da7926c341cf6e77a2ed27912c40267c826cca53f876dad8952d2acaa7ebb6da732dd2e34cc2211a953d575e70137e69ce03526f0677ffc2c77f3488b19a3383188e0beaa03fd32b97e7a991fadd8d9d2c71a2d37c836adba04e6f9b5a9f58ecdfb3aaaada4161e283ecb8c295efdf53635ba73ca20f47181e9d7529da701fb654d55d99ff7a9af4c5b678f7ba7d764c48ea2b15569ee1d20a10029a50d5b1100356b64916c6c38526d1dac1f169e5f4250f27dd9cb7454af6591aac3e7353b3a083f310d735eb7a7530fcddc3d06fad7efbca9bf7e3e22306fa2dfd6a184cf5d0acc29ef7cc35c07a7c1e2fc75bb42c80834f000c5d85b293f40ed6b605ec94df44d87712eec2ad1d1386564e5fd2491ec42317aea9058a44e850b08e2a2c4d261c7c59a96be65d89555285c24326c052b5d102cb8a8341b97fcdb28bf8ad1a5591613dc119f7bc44abba455075baf954149a05ae35f13a1e585445577cd9f13c20a04194307716df5f290403147dc728cff8324ee06b0724bbd11fb59a4f3d717a15726c41113e1fd7adcacb5e303a974dd1f6b74028bd1c61f204a43a8ec0bdcf161ff8f2310ac411ceb866d641d29ca3e68fa259f6ee960d3d5835f930f788a3021c5467b619dbc9e5b8b80a6bdac820d1f56fa282fac56c299a7b2cd1d7b2d9b81e6c28bf2a7d6da6b40a02f4ba2aee0f37311c16b941aeaa11e6e40b16f91cad2089ccfc3")
+    ring_root = bytes.fromhex("85f9095f4abd040839d793d89ab5ff25c61e50c844ab6765e2c0b22373b5a8f6fbe5fc0cd61fdde580b3d44fe1be127197e33b91960b10d2c6fc75aec03f36e16c2a8204961097dbc2c5ba7655543385399cc9ef08bf2e520ccf3b0a7569d88492e630ae2b14e758ab0960e372172203f4c9a41777dadd529971d7ab9d23ab29fe0e9c85ec450505dde7f5ac038274cf")
+    entropy = bytes.fromhex("bb30a42c1e62f0afda5f0a4e8a562f7a13a24cea00ee81917b86b89e801314aa")
+    ring_size = 6
+
+    # construct ring verifier
+    verifier = RingVerifier(ring_root, ring_size)
+
+    # verify signature
+    with pytest.raises(ValueError, match="VRF verification failed"):
+        verifier.verify(
+            b"jam_ticket_seal" + entropy + bytes([attempt]),
+            b"",
+            signature
+        )
