@@ -8,11 +8,7 @@ name = "jam_vrf"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-ark-ff = "0.4"
-ark-ec = "0.4"
-ark-std = "0.4"
 ark-serialize = "0.4"
-ark-ed-on-bls12-381-bandersnatch = "0.4"
 pyo3 = { version = "0.23.3", features = ["auto-initialize"] }
 hex = "0.4"
 ark-vrf = {version = "0.1.0", features = ["bandersnatch", "ring"] }
