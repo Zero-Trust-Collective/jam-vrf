@@ -51,6 +51,7 @@ def test_invalid_ring_sig():
     Verify ring VRF signature of an invalid jam ticket.
     
     testvector sourced from: https://github.com/davxy/jam-test-vectors/blob/polkajam-vectors/safrole/tiny/publish-tickets-no-mark-6.json
+    invalid signature sourced from: https://github.com/davxy/jam-test-vectors/blob/25aaedc8abc8c617287d9df56c916794db82eb92/safrole/tiny/publish-tickets-no-mark-3.json#L8
     """
 
     # safrole ticket
