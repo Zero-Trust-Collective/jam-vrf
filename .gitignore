@@ -12,6 +12,3 @@ target/
 # perf
 *.prof
 *.svg
-
-# docs
-docs/
