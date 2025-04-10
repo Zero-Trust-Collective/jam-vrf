@@ -3,6 +3,7 @@ use ark_serialize::CanonicalDeserialize;
 use ark_vrf::{reexports::ark_serialize, suites::bandersnatch};
 use bandersnatch::{AffinePoint, Output};
 use pyo3::prelude::*;
+use pyo3::types::PyBytes;
 
 /// VRF output type common to both ietf and ring VRFs
 #[pyclass]
@@ -15,5 +16,10 @@ impl VRFOutput {
         let affine =
             AffinePoint::deserialize_compressed(&bytes[..]).map_err(wrap_serialization_error)?;
         Ok(Self(Output::from(affine)))
+    }
+
+    /// Get the hash bytes
+    fn hash<'py>(&self, py: Python<'py>) -> Py<PyBytes> {
+        PyBytes::new(py, &self.0.hash()).into()
     }
 }
