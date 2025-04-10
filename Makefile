@@ -1,9 +1,12 @@
-.PHONY: build test docs
+.PHONY: develop build test docs
+
+develop:
+	uv sync
+	maturin develop
 
 build:
 	uv sync
-	maturin develop
-	maturin build
+	maturin build --release
 
 test:
 	cargo test --no-default-features
