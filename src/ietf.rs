@@ -6,7 +6,34 @@ use ark_vrf::suites::bandersnatch::{IetfProof, Input, Public};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 
-/// Verify an IETF signature of some data & ad by a given public key
+/// Verify an IETF signature against some data & additional data
+///
+/// **Args:**
+/// - public_keys: `bytes` - bandersnatch public key
+/// - data: `bytes`
+/// - ad: `bytes` - additional data
+/// - signature: `bytes`
+///
+/// **Raises:**
+/// - `ValueError` if the signature is invalid
+/// - `Exception` if an internal error is encountered
+///
+/// **Example:**
+/**```
+from jam_vrf import ietf_verify
+
+# arguments
+public_key = bytes.fromhex("b0e1...")
+data = bytes.fromhex("4261...")
+ad = bytes.fromhex("1f42")
+signature = bytes.fromhex("6d1dd...")
+
+# verify signature
+try:
+    ietf_verify(public_key, data, ad, signature)
+except ValueError as e:
+    print("invalid signature!")
+```*/
 #[pyfunction]
 pub fn ietf_verify(public_key: &[u8], data: &[u8], ad: &[u8], signature: &[u8]) -> PyResult<()> {
     // deserialize public key

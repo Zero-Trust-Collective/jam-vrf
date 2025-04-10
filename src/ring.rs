@@ -7,7 +7,7 @@ use ark_vrf::suites::bandersnatch::{
     AffinePoint, Input, PcsParams, Public, RingCommitment, RingProof, RingProofParams,
     RingVerifier as ArkRingVerifier,
 };
-use pyo3::exceptions::PyValueError;
+use pyo3::exceptions::{PyException, PyValueError};
 use pyo3::prelude::*;
 use pyo3::types::PyBytes;
 use std::sync::OnceLock;
@@ -30,7 +30,34 @@ fn get_pcs_params() -> PcsParams {
         .clone()
 }
 
-/// Create a commitment from a list of public keys
+/// Compute the ring commitment for an ordered list of public keys
+///
+/// **Args:**
+/// - public_keys: `List[bytes]` - bandersnatch public keys
+///
+/// **Returns:**
+/// - `bytes`: object that represents the ring commitment
+///
+/// **Raises:**
+/// - `ValueError` if no public keys are provided
+/// - `Exception` if an internal error is encountered
+///
+/// **Example**
+/**```
+from jam_vrf get_ring_commitment
+
+# ring public keys
+public_keys = [
+   bytes.fromhex("7b32..."),
+   ...
+]
+
+# generate ring commitment
+try:
+    commitment = get_ring_commitment(public_keys)
+except Exception as e:
+    ...
+```*/
 #[pyfunction]
 pub fn get_ring_commitment(py: Python<'_>, public_keys: Vec<Vec<u8>>) -> PyResult<Py<PyBytes>> {
     // verify the ring isn't empty
@@ -43,7 +70,7 @@ pub fn get_ring_commitment(py: Python<'_>, public_keys: Vec<Vec<u8>>) -> PyResul
 
     // construct the ring parameters
     let params = RingProofParams::from_pcs_params(public_keys.len(), pc_params)
-        .map_err(|e| PyValueError::new_err(format!("unable to initialize ring params: {:?}", e)))?;
+        .map_err(|e| PyException::new_err(format!("unable to initialize ring params: {:?}", e)))?;
 
     // deserialize the keys, substituting the padding point for any invalid keys
     let parsed_keys: Vec<AffinePoint> = public_keys
@@ -61,11 +88,33 @@ pub fn get_ring_commitment(py: Python<'_>, public_keys: Vec<Vec<u8>>) -> PyResul
     let mut bytes = Vec::new();
     commitment
         .serialize_compressed(&mut bytes)
-        .map_err(|e| PyValueError::new_err(format!("Failed to serialize commitment: {}", e)))?;
+        .map_err(|e| PyException::new_err(format!("Failed to serialize commitment: {}", e)))?;
     Ok(PyBytes::new(py, &bytes).into())
 }
 
-/// VRF verifier for ring signatures
+/// Used for verifying signatures against a particular ring
+///
+/// **Constructor Args:**
+/// - commitment: `bytes` - ring commitment (in JAM this is called a **ring root**)
+/// - ring_size: `int` - number of keys in the ring
+///
+/// **Raises:**
+/// - `Exception` - if an internal error is encountered
+///
+/// **Example:**
+/**```
+from jam_vrf import RingVerifier
+
+# arguments
+commitment = bytes.fromhex("85f9...")
+ring_size = 6
+
+# construct ring verifier
+try:
+    verifier = RingVerifier(commitment, ring_size)
+except Exception as e:
+    ...
+```*/
 #[pyclass]
 pub struct RingVerifier(ArkRingVerifier);
 
@@ -73,7 +122,7 @@ pub struct RingVerifier(ArkRingVerifier);
 impl RingVerifier {
     /// Construct a ring verifier from a commitment & ring size
     #[new]
-    fn new(commitment: &[u8], ring_size: usize) -> Result<Self, CryptoError> {
+    fn new(commitment: &[u8], ring_size: usize) -> PyResult<Self> {
         // deserialize commitment
         let commitment = RingCommitment::deserialize_compressed(&commitment[..])
             .map_err(wrap_serialization_error)?;
@@ -91,7 +140,36 @@ impl RingVerifier {
         Ok(Self(verifier))
     }
 
-    /// Verify a ring VRF signature
+    /// Verify a ring signature against some data & additional data
+    ///
+    /// **Args:**
+    /// - data: `bytes`
+    /// - ad: `bytes` - additional data
+    /// - signature: `bytes` - ring signature
+    ///
+    /// **Raises:**
+    /// - `ValueError` - if the signature is invalid
+    /// - `Exception` - if an internal error is encountered
+    ///
+    /// **Example:**
+    /**
+    verifier: RingVerifier
+
+    # arguments
+    entropy = bytes.fromhex("bb30...")
+    attempt = 1
+    signature = bytes.fromhex("1dfb...")
+
+    # verify signature
+    try:
+        verifier.verify(
+            b"jam_ticket_seal" + entropy + bytes([attempt]),
+            b"",
+            signature
+        )
+    except ValueError as e:
+        print("invalid signature!")
+    */
     fn verify(&self, data: &[u8], ad: &[u8], signature: &[u8]) -> PyResult<()> {
         // construct vrf input
         let input = Input::new(data).ok_or_else(|| {

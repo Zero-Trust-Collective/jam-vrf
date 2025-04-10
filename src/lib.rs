@@ -5,7 +5,7 @@ mod ietf;
 mod ring;
 mod vrf_output;
 
-/// Python module
+/// A Python library for verifying JAM VRF signatures
 #[pymodule]
 fn jam_vrf(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<vrf_output::VRFOutput>()?;

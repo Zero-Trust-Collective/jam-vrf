@@ -63,19 +63,18 @@
                     <h1 class="modulename">
 jam_vrf    </h1>
 
-                        <div class="docstring"><p>Python module</p>
+                        <div class="docstring"><p>A Python library for verifying JAM VRF signatures</p>
 </div>
 
                         <input id="mod-jam_vrf-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 
                         <label class="view-source-button" for="mod-jam_vrf-view-source"><span>View Source</span></label>
 
-                        <div class="pdoc-code codehilite"><pre><span></span><span id="L-1"><a href="#L-1"><span class="linenos">1</span></a><span class="c1"># Import from the compiled Rust module</span>
-</span><span id="L-2"><a href="#L-2"><span class="linenos">2</span></a><span class="kn">from</span><span class="w"> </span><span class="nn">.jam_vrf</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
-</span><span id="L-3"><a href="#L-3"><span class="linenos">3</span></a>
-</span><span id="L-4"><a href="#L-4"><span class="linenos">4</span></a><span class="vm">__doc__</span> <span class="o">=</span> <span class="n">jam_vrf</span><span class="o">.</span><span class="vm">__doc__</span>
-</span><span id="L-5"><a href="#L-5"><span class="linenos">5</span></a>
-</span><span id="L-6"><a href="#L-6"><span class="linenos">6</span></a><span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;RingVerifier&quot;</span><span class="p">,</span> <span class="s2">&quot;VRFOutput&quot;</span><span class="p">,</span> <span class="s2">&quot;get_ring_commitment&quot;</span><span class="p">,</span> <span class="s2">&quot;ietf_verify&quot;</span><span class="p">]</span>
+                        <div class="pdoc-code codehilite"><pre><span></span><span id="L-1"><a href="#L-1"><span class="linenos">1</span></a><span class="kn">from</span><span class="w"> </span><span class="nn">.jam_vrf</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+</span><span id="L-2"><a href="#L-2"><span class="linenos">2</span></a>
+</span><span id="L-3"><a href="#L-3"><span class="linenos">3</span></a><span class="vm">__doc__</span> <span class="o">=</span> <span class="n">jam_vrf</span><span class="o">.</span><span class="vm">__doc__</span>
+</span><span id="L-4"><a href="#L-4"><span class="linenos">4</span></a>
+</span><span id="L-5"><a href="#L-5"><span class="linenos">5</span></a><span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;RingVerifier&quot;</span><span class="p">,</span> <span class="s2">&quot;VRFOutput&quot;</span><span class="p">,</span> <span class="s2">&quot;get_ring_commitment&quot;</span><span class="p">,</span> <span class="s2">&quot;ietf_verify&quot;</span><span class="p">]</span>
 </span></pre></div>
 
 
@@ -90,7 +89,35 @@ jam_vrf    </h1>
     </div>
     <a class="headerlink" href="#RingVerifier"></a>
     
-            <div class="docstring"><p>VRF verifier for ring signatures</p>
+            <div class="docstring"><p>Verifier instance used for verifying signatures against a particular ring</p>
+
+<p><strong>Args:</strong></p>
+
+<ul>
+<li>commitment: <code>bytes</code> - ring commitment (in JAM this is called a <strong>ring root</strong>)</li>
+<li>ring_size: <code>int</code> - number of keys in the ring</li>
+</ul>
+
+<p><strong>Raises:</strong></p>
+
+<ul>
+<li><code>Exception</code> - if an internal error is encountered</li>
+</ul>
+
+<p><strong>Example:</strong></p>
+
+<pre><code>from jam_vrf import RingVerifier
+
+# arguments
+commitment = bytes.fromhex("85f9...")
+ring_size = 6
+
+# construct ring verifier
+try:
+    verifier = RingVerifier(commitment, ring_size)
+except Exception as e:
+    ...
+</code></pre>
 </div>
 
 
@@ -104,7 +131,42 @@ jam_vrf    </h1>
     </div>
     <a class="headerlink" href="#RingVerifier.verify"></a>
     
-            <div class="docstring"><p>Verify a ring VRF signature</p>
+            <div class="docstring"><p>Verify a ring signature against some data &amp; additional data</p>
+
+<p><strong>Args:</strong></p>
+
+<ul>
+<li>data: <code>bytes</code></li>
+<li>ad: <code>bytes</code> - additional data</li>
+<li>signature: <code>bytes</code> - ring signature</li>
+</ul>
+
+<p><strong>Raises:</strong></p>
+
+<ul>
+<li><code>ValueError</code> - if the signature is invalid</li>
+<li><code>Exception</code> - if an internal error is encountered</li>
+</ul>
+
+<p><strong>Example:</strong></p>
+
+<pre><code>verifier: RingVerifier
+
+# arguments
+entropy = bytes.fromhex("bb30...")
+attempt = 1
+signature = bytes.fromhex("1dfb...")
+
+# verify signature
+try:
+    verifier.verify(
+        b"jam_ticket_seal" + entropy + bytes([attempt]),
+        b"",
+        signature
+    )
+except ValueError as e:
+    print("invalid signature!")
+</code></pre>
 </div>
 
 
@@ -121,6 +183,27 @@ jam_vrf    </h1>
     <a class="headerlink" href="#VRFOutput"></a>
     
             <div class="docstring"><p>VRF output type common to both ietf and ring VRFs</p>
+
+<p><strong>Args:</strong></p>
+
+<ul>
+<li>bytes: <code>bytes</code> - output bytes</li>
+</ul>
+
+<p><strong>Raises:</strong></p>
+
+<ul>
+<li><code>Exception</code> if an internal error is encountered</li>
+</ul>
+
+<p><strong>Example:</strong></p>
+
+<pre><code>from jam_vrf import VRFOutput
+
+# construct vrf output from a safrole ticket signature
+signature = bytes.fromhex("1dfb...")
+vrf_output = VRFOutput(signature[:32])
+</code></pre>
 </div>
 
 
@@ -134,7 +217,13 @@ jam_vrf    </h1>
     </div>
     <a class="headerlink" href="#VRFOutput.hash"></a>
     
-            <div class="docstring"><p>Get the hash bytes</p>
+            <div class="docstring"><p>Return the VRF output hash</p>
+
+<p><strong>Example:</strong></p>
+
+<pre><code>vrf_output: VRFOutput
+id = vrf_output.hash()[:32] # ticket IDs in JAM only use the first 32 bytes
+</code></pre>
 </div>
 
 
@@ -150,7 +239,43 @@ jam_vrf    </h1>
     </div>
     <a class="headerlink" href="#get_ring_commitment"></a>
     
-            <div class="docstring"><p>Create a commitment from a list of public keys</p>
+            <div class="docstring"><p>Compute the ring commitment for an ordered list of public keys</p>
+
+<p><strong>Args:</strong></p>
+
+<ul>
+<li>public_keys: <code>List[bytes]</code> - bandersnatch public keys</li>
+</ul>
+
+<p><strong>Returns:</strong></p>
+
+<ul>
+<li><code>bytes</code>: object that represents the ring commitment</li>
+</ul>
+
+<p><strong>Raises:</strong></p>
+
+<ul>
+<li><code>ValueError</code> if no public keys are provided</li>
+<li><code>Exception</code> if an internal error is encountered</li>
+</ul>
+
+<p><strong>Example</strong></p>
+
+<pre><code>from jam_vrf get_ring_commitment
+
+# ring public keys
+public_keys = [
+   bytes.fromhex("7b32..."),
+   ...
+]
+
+# generate ring commitment
+try:
+    commitment = get_ring_commitment(public_keys)
+except Exception as e:
+    ...
+</code></pre>
 </div>
 
 
@@ -165,7 +290,40 @@ jam_vrf    </h1>
     </div>
     <a class="headerlink" href="#ietf_verify"></a>
     
-            <div class="docstring"><p>Verify an IETF signature of some data &amp; ad by a given public key</p>
+            <div class="docstring"><p>Verify an IETF signature against some data &amp; additional data</p>
+
+<p><strong>Args:</strong></p>
+
+<ul>
+<li>public_keys: <code>bytes</code> - bandersnatch public key</li>
+<li>data: <code>bytes</code></li>
+<li>ad: <code>bytes</code> - additional data</li>
+<li>signature: <code>bytes</code></li>
+</ul>
+
+<p><strong>Raises:</strong></p>
+
+<ul>
+<li><code>ValueError</code> if the signature is invalid</li>
+<li><code>Exception</code> if an internal error is encountered</li>
+</ul>
+
+<p><strong>Example:</strong></p>
+
+<pre><code>from jam_vrf import ietf_verify
+
+# arguments
+public_key = bytes.fromhex("b0e1...")
+data = bytes.fromhex("4261...")
+ad = bytes.fromhex("1f42")
+signature = bytes.fromhex("6d1d...")
+
+# verify signature
+try:
+    ietf_verify(public_key, data, ad, signature)
+except ValueError as e:
+    print("invalid signature!")
+</code></pre>
 </div>
 
 
