@@ -1,9 +1,11 @@
 # Python
 __pycache__/
+.venv
 
 # Distribution / packaging
 dist/
 target/
+*.so
 
 # IDE
 .DS_Store
