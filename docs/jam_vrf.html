@@ -89,9 +89,9 @@ jam_vrf    </h1>
     </div>
     <a class="headerlink" href="#RingVerifier"></a>
     
-            <div class="docstring"><p>Verifier instance used for verifying signatures against a particular ring</p>
+            <div class="docstring"><p>Used for verifying signatures against a particular ring</p>
 
-<p><strong>Args:</strong></p>
+<p><strong>Constructor Args:</strong></p>
 
 <ul>
 <li>commitment: <code>bytes</code> - ring commitment (in JAM this is called a <strong>ring root</strong>)</li>
@@ -101,19 +101,12 @@ jam_vrf    </h1>
 <p><strong>Raises:</strong></p>
 
 <ul>
-<li><code>Exception</code> - if an internal error is encountered</li>
+<li><code>Exception</code> - internal error</li>
 </ul>
 
 <p><strong>Example:</strong></p>
 
-<pre><code>from jam_vrf import RingVerifier
-
-# arguments
-commitment = bytes.fromhex("85f9...")
-ring_size = 6
-
-# construct ring verifier
-try:
+<pre><code>try:
     verifier = RingVerifier(commitment, ring_size)
 except Exception as e:
     ...
@@ -144,26 +137,16 @@ except Exception as e:
 <p><strong>Raises:</strong></p>
 
 <ul>
-<li><code>ValueError</code> - if the signature is invalid</li>
-<li><code>Exception</code> - if an internal error is encountered</li>
+<li><code>ValueError</code> - invalid signature</li>
+<li><code>Exception</code> - internal error</li>
 </ul>
 
 <p><strong>Example:</strong></p>
 
 <pre><code>verifier: RingVerifier
 
-# arguments
-entropy = bytes.fromhex("bb30...")
-attempt = 1
-signature = bytes.fromhex("1dfb...")
-
-# verify signature
 try:
-    verifier.verify(
-        b"jam_ticket_seal" + entropy + bytes([attempt]),
-        b"",
-        signature
-    )
+    verifier.verify(data, ad, signature)
 except ValueError as e:
     print("invalid signature!")
 </code></pre>
@@ -187,23 +170,16 @@ except ValueError as e:
 <p><strong>Args:</strong></p>
 
 <ul>
-<li>bytes: <code>bytes</code> - output bytes</li>
+<li>output: <code>bytes</code></li>
 </ul>
 
 <p><strong>Raises:</strong></p>
 
 <ul>
-<li><code>Exception</code> if an internal error is encountered</li>
+<li><code>Exception</code> - internal error</li>
 </ul>
 
-<p><strong>Example:</strong></p>
-
-<pre><code>from jam_vrf import VRFOutput
-
-# construct vrf output from a safrole ticket signature
-signature = bytes.fromhex("1dfb...")
-vrf_output = VRFOutput(signature[:32])
-</code></pre>
+<p><strong>Example:</strong> <code>vrf_output = VRFOutput(output)</code></p>
 </div>
 
 
@@ -217,13 +193,9 @@ vrf_output = VRFOutput(signature[:32])
     </div>
     <a class="headerlink" href="#VRFOutput.hash"></a>
     
-            <div class="docstring"><p>Return the VRF output hash</p>
+            <div class="docstring"><p>Hash the VRF output point</p>
 
-<p><strong>Example:</strong></p>
-
-<pre><code>vrf_output: VRFOutput
-id = vrf_output.hash()[:32] # ticket IDs in JAM only use the first 32 bytes
-</code></pre>
+<p><strong>Example:</strong> <code>id = VRFOutput(...).hash()</code></p>
 </div>
 
 
@@ -256,22 +228,13 @@ id = vrf_output.hash()[:32] # ticket IDs in JAM only use the first 32 bytes
 <p><strong>Raises:</strong></p>
 
 <ul>
-<li><code>ValueError</code> if no public keys are provided</li>
-<li><code>Exception</code> if an internal error is encountered</li>
+<li><code>ValueError</code> - invalid or empty input keys</li>
+<li><code>Exception</code> - internal error</li>
 </ul>
 
 <p><strong>Example</strong></p>
 
-<pre><code>from jam_vrf get_ring_commitment
-
-# ring public keys
-public_keys = [
-   bytes.fromhex("7b32..."),
-   ...
-]
-
-# generate ring commitment
-try:
+<pre><code>try:
     commitment = get_ring_commitment(public_keys)
 except Exception as e:
     ...
@@ -304,22 +267,13 @@ except Exception as e:
 <p><strong>Raises:</strong></p>
 
 <ul>
-<li><code>ValueError</code> if the signature is invalid</li>
-<li><code>Exception</code> if an internal error is encountered</li>
+<li><code>ValueError</code> - invalid signature</li>
+<li><code>Exception</code> - internal error</li>
 </ul>
 
 <p><strong>Example:</strong></p>
 
-<pre><code>from jam_vrf import ietf_verify
-
-# arguments
-public_key = bytes.fromhex("b0e1...")
-data = bytes.fromhex("4261...")
-ad = bytes.fromhex("1f42")
-signature = bytes.fromhex("6d1d...")
-
-# verify signature
-try:
+<pre><code>try:
     ietf_verify(public_key, data, ad, signature)
 except ValueError as e:
     print("invalid signature!")

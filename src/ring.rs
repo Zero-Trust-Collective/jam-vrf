@@ -39,20 +39,11 @@ fn get_pcs_params() -> PcsParams {
 /// - `bytes`: object that represents the ring commitment
 ///
 /// **Raises:**
-/// - `ValueError` if no public keys are provided
-/// - `Exception` if an internal error is encountered
+/// - `ValueError` - invalid or empty input keys
+/// - `Exception` - internal error
 ///
 /// **Example**
 /**```
-from jam_vrf get_ring_commitment
-
-# ring public keys
-public_keys = [
-   bytes.fromhex("7b32..."),
-   ...
-]
-
-# generate ring commitment
 try:
     commitment = get_ring_commitment(public_keys)
 except Exception as e:
@@ -99,17 +90,10 @@ pub fn get_ring_commitment(py: Python<'_>, public_keys: Vec<Vec<u8>>) -> PyResul
 /// - ring_size: `int` - number of keys in the ring
 ///
 /// **Raises:**
-/// - `Exception` - if an internal error is encountered
+/// - `Exception` - internal error
 ///
 /// **Example:**
 /**```
-from jam_vrf import RingVerifier
-
-# arguments
-commitment = bytes.fromhex("85f9...")
-ring_size = 6
-
-# construct ring verifier
 try:
     verifier = RingVerifier(commitment, ring_size)
 except Exception as e:
@@ -148,25 +132,15 @@ impl RingVerifier {
     /// - signature: `bytes` - ring signature
     ///
     /// **Raises:**
-    /// - `ValueError` - if the signature is invalid
-    /// - `Exception` - if an internal error is encountered
+    /// - `ValueError` - invalid signature
+    /// - `Exception` - internal error
     ///
     /// **Example:**
     /**
     verifier: RingVerifier
 
-    # arguments
-    entropy = bytes.fromhex("bb30...")
-    attempt = 1
-    signature = bytes.fromhex("1dfb...")
-
-    # verify signature
     try:
-        verifier.verify(
-            b"jam_ticket_seal" + entropy + bytes([attempt]),
-            b"",
-            signature
-        )
+        verifier.verify(data, ad, signature)
     except ValueError as e:
         print("invalid signature!")
     */

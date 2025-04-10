@@ -8,38 +8,27 @@ use pyo3::types::PyBytes;
 /// VRF output type common to both ietf and ring VRFs
 ///
 /// **Args:**
-/// - bytes: `bytes` - output bytes
+/// - output: `bytes`
 ///
 /// **Raises:**
-/// - `Exception` if an internal error is encountered
+/// - `Exception` - internal error
 ///
-/// **Example:**
-/**```
-from jam_vrf import VRFOutput
-
-# construct vrf output from a safrole ticket signature
-signature = bytes.fromhex("1dfb...")
-vrf_output = VRFOutput(signature[:32])
-```*/
+/// **Example:** `vrf_output = VRFOutput(output)`
 #[pyclass]
 pub struct VRFOutput(pub Output);
 
 #[pymethods]
 impl VRFOutput {
     #[new]
-    pub fn new(bytes: &[u8]) -> Result<Self, CryptoError> {
+    pub fn new(output: &[u8]) -> Result<Self, CryptoError> {
         let affine =
-            AffinePoint::deserialize_compressed(&bytes[..]).map_err(wrap_serialization_error)?;
+            AffinePoint::deserialize_compressed(&output[..]).map_err(wrap_serialization_error)?;
         Ok(Self(Output::from(affine)))
     }
 
-    /// Return the VRF output hash
+    /// Hash the VRF output point
     ///
-    /// **Example:**
-    /**
-    vrf_output: VRFOutput
-    id = vrf_output.hash()[:32] # ticket IDs in JAM only use the first 32 bytes
-    */
+    /// **Example:** `id = VRFOutput(...).hash()`
     fn hash<'py>(&self, py: Python<'py>) -> Py<PyBytes> {
         PyBytes::new(py, &self.0.hash()).into()
     }

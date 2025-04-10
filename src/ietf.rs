@@ -15,20 +15,11 @@ use pyo3::prelude::*;
 /// - signature: `bytes`
 ///
 /// **Raises:**
-/// - `ValueError` if the signature is invalid
-/// - `Exception` if an internal error is encountered
+/// - `ValueError` - invalid signature
+/// - `Exception` - internal error
 ///
 /// **Example:**
 /**```
-from jam_vrf import ietf_verify
-
-# arguments
-public_key = bytes.fromhex("b0e1...")
-data = bytes.fromhex("4261...")
-ad = bytes.fromhex("1f42")
-signature = bytes.fromhex("6d1dd...")
-
-# verify signature
 try:
     ietf_verify(public_key, data, ad, signature)
 except ValueError as e:
