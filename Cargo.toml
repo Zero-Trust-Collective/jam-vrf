@@ -6,6 +6,7 @@ edition = "2021"
 [lib]
 name = "jam_vrf"
 crate-type = ["cdylib", "rlib"]
+doctest = false
 
 [dependencies]
 ark-serialize = "0.4"
