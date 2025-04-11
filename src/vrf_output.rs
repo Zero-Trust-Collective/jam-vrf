@@ -5,7 +5,7 @@ use bandersnatch::{AffinePoint, Output};
 use pyo3::prelude::*;
 use pyo3::types::PyBytes;
 
-/// VRF output type common to both ietf and ring VRFs
+/// VRF output type common to both IETF and ring VRFs
 ///
 /// **Args:**
 /// - output: `bytes`
@@ -26,9 +26,9 @@ impl VRFOutput {
         Ok(Self(Output::from(affine)))
     }
 
-    /// Hash the VRF output point
+    /// Hash the output point
     ///
-    /// **Example:** `id = VRFOutput(...).hash()`
+    /// **Example:** `h = VRFOutput(...).hash()`
     fn hash<'py>(&self, py: Python<'py>) -> Py<PyBytes> {
         PyBytes::new(py, &self.0.hash()).into()
     }

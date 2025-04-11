@@ -46,7 +46,7 @@ fn get_pcs_params() -> PcsParams {
 /**```
 try:
     commitment = get_ring_commitment(public_keys)
-except Exception as e:
+except Exception:
     ...
 ```*/
 #[pyfunction]
@@ -83,7 +83,7 @@ pub fn get_ring_commitment(py: Python<'_>, public_keys: Vec<Vec<u8>>) -> PyResul
     Ok(PyBytes::new(py, &bytes).into())
 }
 
-/// Used for verifying signatures against a particular ring
+/// Used for verifying ring signatures
 ///
 /// **Constructor Args:**
 /// - commitment: `bytes` - ring commitment (in JAM this is called a **ring root**)
@@ -96,7 +96,7 @@ pub fn get_ring_commitment(py: Python<'_>, public_keys: Vec<Vec<u8>>) -> PyResul
 /**```
 try:
     verifier = RingVerifier(commitment, ring_size)
-except Exception as e:
+except Exception:
     ...
 ```*/
 #[pyclass]
@@ -141,7 +141,7 @@ impl RingVerifier {
 
     try:
         verifier.verify(data, ad, signature)
-    except ValueError as e:
+    except ValueError :
         print("invalid signature!")
     */
     fn verify(&self, data: &[u8], ad: &[u8], signature: &[u8]) -> PyResult<()> {

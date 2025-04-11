@@ -9,7 +9,7 @@ use pyo3::prelude::*;
 /// Verify an IETF signature against some data & additional data
 ///
 /// **Args:**
-/// - public_keys: `bytes` - bandersnatch public key
+/// - public_key: `bytes` - bandersnatch public key
 /// - data: `bytes`
 /// - ad: `bytes` - additional data
 /// - signature: `bytes`
@@ -22,7 +22,7 @@ use pyo3::prelude::*;
 /**```
 try:
     ietf_verify(public_key, data, ad, signature)
-except ValueError as e:
+except ValueError :
     print("invalid signature!")
 ```*/
 #[pyfunction]

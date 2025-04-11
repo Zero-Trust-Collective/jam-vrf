@@ -89,7 +89,7 @@ jam_vrf    </h1>
     </div>
     <a class="headerlink" href="#RingVerifier"></a>
     
-            <div class="docstring"><p>Used for verifying signatures against a particular ring</p>
+            <div class="docstring"><p>Used for verifying ring signatures</p>
 
 <p><strong>Constructor Args:</strong></p>
 
@@ -108,7 +108,7 @@ jam_vrf    </h1>
 
 <pre><code>try:
     verifier = RingVerifier(commitment, ring_size)
-except Exception as e:
+except Exception:
     ...
 </code></pre>
 </div>
@@ -147,7 +147,7 @@ except Exception as e:
 
 try:
     verifier.verify(data, ad, signature)
-except ValueError as e:
+except ValueError :
     print("invalid signature!")
 </code></pre>
 </div>
@@ -165,7 +165,7 @@ except ValueError as e:
     </div>
     <a class="headerlink" href="#VRFOutput"></a>
     
-            <div class="docstring"><p>VRF output type common to both ietf and ring VRFs</p>
+            <div class="docstring"><p>VRF output type common to both IETF and ring VRFs</p>
 
 <p><strong>Args:</strong></p>
 
@@ -193,9 +193,9 @@ except ValueError as e:
     </div>
     <a class="headerlink" href="#VRFOutput.hash"></a>
     
-            <div class="docstring"><p>Hash the VRF output point</p>
+            <div class="docstring"><p>Hash the output point</p>
 
-<p><strong>Example:</strong> <code>id = VRFOutput(...).hash()</code></p>
+<p><strong>Example:</strong> <code>h = VRFOutput(...).hash()</code></p>
 </div>
 
 
@@ -236,7 +236,7 @@ except ValueError as e:
 
 <pre><code>try:
     commitment = get_ring_commitment(public_keys)
-except Exception as e:
+except Exception:
     ...
 </code></pre>
 </div>
@@ -258,7 +258,7 @@ except Exception as e:
 <p><strong>Args:</strong></p>
 
 <ul>
-<li>public_keys: <code>bytes</code> - bandersnatch public key</li>
+<li>public_key: <code>bytes</code> - bandersnatch public key</li>
 <li>data: <code>bytes</code></li>
 <li>ad: <code>bytes</code> - additional data</li>
 <li>signature: <code>bytes</code></li>
@@ -275,7 +275,7 @@ except Exception as e:
 
 <pre><code>try:
     ietf_verify(public_key, data, ad, signature)
-except ValueError as e:
+except ValueError :
     print("invalid signature!")
 </code></pre>
 </div>
