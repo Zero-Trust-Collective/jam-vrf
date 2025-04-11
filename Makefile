@@ -1,9 +1,16 @@
-.PHONY: test docs
+.PHONY: develop build test docs
+
+develop:
+	uv sync
+	maturin develop
+
+build:
+	uv sync
+	maturin build --release
 
 test:
 	cargo test --no-default-features
-	uv sync
 	pytest -n auto
 
 docs:
-	pdoc pyvrf -o docs
+	pdoc jam_vrf -o docs
