@@ -86,7 +86,7 @@ pub fn get_ring_commitment(py: Python<'_>, public_keys: Vec<Vec<u8>>) -> PyResul
 /// Used for verifying ring signatures
 ///
 /// **Constructor Args:**
-/// - commitment: `bytes` - ring commitment (in JAM this is called a **ring root**)
+/// - commitment: `bytes` - ring commitment
 /// - ring_size: `int` - number of keys in the ring
 ///
 /// **Raises:**

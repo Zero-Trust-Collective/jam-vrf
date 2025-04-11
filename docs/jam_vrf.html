@@ -94,7 +94,7 @@ jam_vrf    </h1>
 <p><strong>Constructor Args:</strong></p>
 
 <ul>
-<li>commitment: <code>bytes</code> - ring commitment (in JAM this is called a <strong>ring root</strong>)</li>
+<li>commitment: <code>bytes</code> - ring commitment</li>
 <li>ring_size: <code>int</code> - number of keys in the ring</li>
 </ul>
 
@@ -195,7 +195,7 @@ except ValueError :
     
             <div class="docstring"><p>Hash the output point</p>
 
-<p><strong>Example:</strong> <code>h = VRFOutput(...).hash()</code></p>
+<p><strong>Example:</strong> <code>h = VRFOutput(output).hash()</code></p>
 </div>
 
 
