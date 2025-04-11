@@ -147,7 +147,7 @@ except Exception:
 
 try:
     verifier.verify(data, ad, signature)
-except ValueError :
+except ValueError:
     print("invalid signature!")
 </code></pre>
 </div>
@@ -195,7 +195,7 @@ except ValueError :
     
             <div class="docstring"><p>Hash the output point</p>
 
-<p><strong>Example:</strong> <code>h = VRFOutput(output).hash()</code></p>
+<p><strong>Example:</strong> <code>hash = VRFOutput(output).hash()</code></p>
 </div>
 
 
@@ -275,7 +275,7 @@ except Exception:
 
 <pre><code>try:
     ietf_verify(public_key, data, ad, signature)
-except ValueError :
+except ValueError:
     print("invalid signature!")
 </code></pre>
 </div>

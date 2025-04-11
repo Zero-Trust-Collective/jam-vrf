@@ -28,7 +28,7 @@ impl VRFOutput {
 
     /// Hash the output point
     ///
-    /// **Example:** `h = VRFOutput(output).hash()`
+    /// **Example:** `hash = VRFOutput(output).hash()`
     fn hash<'py>(&self, py: Python<'py>) -> Py<PyBytes> {
         PyBytes::new(py, &self.0.hash()).into()
     }

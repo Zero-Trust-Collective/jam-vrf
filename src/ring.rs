@@ -141,7 +141,7 @@ impl RingVerifier {
 
     try:
         verifier.verify(data, ad, signature)
-    except ValueError :
+    except ValueError:
         print("invalid signature!")
     */
     fn verify(&self, data: &[u8], ad: &[u8], signature: &[u8]) -> PyResult<()> {

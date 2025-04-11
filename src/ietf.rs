@@ -22,7 +22,7 @@ use pyo3::prelude::*;
 /**```
 try:
     ietf_verify(public_key, data, ad, signature)
-except ValueError :
+except ValueError:
     print("invalid signature!")
 ```*/
 #[pyfunction]
