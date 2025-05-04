@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from typing import List
+from typing import List, Tuple
 
 __all__ = ["RingVerifier", "VRFOutput", "get_ring_commitment", "ietf_verify"]
 
 class RingVerifier:
     def __init__(self, commitment: bytes, ring_size: int) -> None: ...
     def verify(self, data: bytes, ad: bytes, signature: bytes) -> None: ...
+    def verify_batch(self, batch: List[Tuple[data: bytes, ad: bytes, signature: bytes]]) -> None: ...
 
 class VRFOutput:
     def __init__(self, output: bytes) -> None: ...

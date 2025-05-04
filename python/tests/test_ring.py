@@ -46,6 +46,21 @@ def test_valid_ring_sig():
         signature
     )
 
+    # verify batch of signatures
+    signatures = [
+        (
+            b"jam_ticket_seal" + entropy + bytes([attempt]),
+            b"",
+            signature
+        ),
+        (
+            b"jam_ticket_seal" + entropy + bytes([attempt]),
+            b"",
+            signature
+        ),
+    ]
+    verifier.verify_batch(signatures)
+
 def test_invalid_ring_sig():
     """
     Verify ring VRF signature of an invalid jam ticket.
@@ -71,3 +86,20 @@ def test_invalid_ring_sig():
             b"",
             signature
         )
+
+    # verify batch of signatures
+    # TODO test where only one of the signatures is invalid
+    signatures = [
+        (
+            b"jam_ticket_seal" + entropy + bytes([attempt]),
+            b"",
+            signature
+        ),
+        (
+            b"jam_ticket_seal" + entropy + bytes([attempt]),
+            b"",
+            signature
+        )
+    ]
+    with pytest.raises(ValueError):
+        verifier.verify_batch(signatures)

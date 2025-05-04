@@ -319,14 +319,23 @@ mod tests {
         // construct ring verifier
         let verifier = RingVerifier::new(&ring_root, ring_size).unwrap();
 
-        // verify signature
+        // verify batch of valid signatures
         let mut data = Vec::new();
         data.extend_from_slice(b"jam_ticket_seal");
         data.extend_from_slice(entropy.as_slice());
         data.push(1);
         let ad = b"";
+        let batch_len = 5;
+        let mut batch = vec![];
+        for _ in 0..batch_len {
+            batch.push((data.to_vec(), ad.to_vec(), signature.to_vec()));
+        }
         verifier
-            .verify_batch(vec![(data, ad.to_vec(), signature)])
+            .verify_batch(batch.clone())
             .expect("signature verification should pass");
+
+        // verify batch that contains an invalid signature
+        batch.push((data.to_vec(), b"bad_ad".to_vec(), signature.to_vec()));
+        assert!(verifier.verify_batch(batch).is_err());
     }
 }
