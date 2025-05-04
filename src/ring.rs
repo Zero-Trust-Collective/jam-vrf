@@ -11,6 +11,7 @@ use pyo3::exceptions::{PyException, PyValueError};
 use pyo3::prelude::*;
 use pyo3::types::PyBytes;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
+use std::collections::HashMap;
 use std::sync::OnceLock;
 
 static SRS_PARAMS: OnceLock<PcsParams> = OnceLock::new();
@@ -171,10 +172,10 @@ impl RingVerifier {
     ///
     /// **Args:**
     /// -
-    /// - batch: collection of signatures to be verified [(data, additional dat, signature)]
+    /// - batch: [(data, additional data, signature)] - collection of signatures to be verified
     ///
     /// **Raises:**
-    /// - `ValueError` - invalid signature
+    /// - `ValueError(Dict{index: PyErr})` - a dictionary mapping invalid indexes to validation errors
     /// - `Exception` - internal error
     ///
     /// **Example:**
@@ -187,30 +188,55 @@ impl RingVerifier {
         print("batch contains an invalid signature!")
     */
     fn verify_batch(&self, batch: Vec<(Vec<u8>, Vec<u8>, Vec<u8>)>) -> PyResult<()> {
-        let verification_results = batch.par_iter().map(|(data, ad, signature)| {
-            // construct vrf input
-            let input = Input::new(data).ok_or_else(|| {
-                CryptoError::InvalidInput("Failed to create VRF input from data".to_string())
-            })?;
+        let max_signatures = usize::MAX;
+        if batch.len() > max_signatures.into() {
+            return Err(PyValueError::new_err(format!(
+                "Batch cannot contain more than {} items!",
+                max_signatures
+            )));
+        }
+        let verification_results: Vec<Result<(), PyErr>> = batch
+            .par_iter()
+            .map(|(data, ad, signature)| {
+                // construct vrf input
+                let input = Input::new(data).ok_or_else(|| {
+                    PyErr::from(CryptoError::InvalidInput(
+                        "Failed to create VRF input from data".to_string(),
+                    ))
+                })?;
 
-            // construct vrf output
-            let output = VRFOutput::new(signature.get(..32).ok_or(CryptoError::InvalidInput(
-                "Unable to extract output from signature".to_string(),
-            ))?)?;
+                // construct vrf output
+                let output = VRFOutput::new(signature.get(..32).ok_or(PyErr::from(
+                    CryptoError::InvalidInput(
+                        "Unable to extract output from signature".to_string(),
+                    ),
+                ))?)?;
 
-            // deserialize proof
-            let proof = RingProof::deserialize_compressed(signature.get(32..).ok_or(
-                CryptoError::InvalidInput("Unable to extract proof from signature".to_string()),
-            )?)
-            .map_err(wrap_serialization_error)?;
+                // deserialize proof
+                let proof = RingProof::deserialize_compressed(signature.get(32..).ok_or(
+                    PyErr::from(CryptoError::InvalidInput(
+                        "Unable to extract proof from signature".to_string(),
+                    )),
+                )?)
+                .map_err(wrap_serialization_error)?;
 
-            // verify signature
-            Public::verify(input, output.0, ad, &proof, &self.0).map_err(wrap_vrf_error)
-        });
-        if verification_results.any(|r| r.is_err()) {
-            return Err(PyValueError::new_err(
-                "Batch contains an invalid signature!",
-            ));
+                // verify signature
+                Public::verify(input, output.0, ad, &proof, &self.0)
+                    .map_err(wrap_vrf_error)
+                    .map_err(|e| e.into())
+            })
+            .collect();
+
+        // if any of the signatures are invalid, return a PyErr containing an errors dictionary
+        // the errors dictionary maps batch indexes to verification errors
+        if verification_results.iter().any(|r| r.is_err()) {
+            let mut invalid_signatures: HashMap<usize, PyErr> = HashMap::new();
+            for (i, result) in verification_results.into_iter().enumerate() {
+                if let Err(e) = result {
+                    invalid_signatures.insert(i, e);
+                }
+            }
+            return Err(PyValueError::new_err(invalid_signatures));
         }
         Ok(())
     }
