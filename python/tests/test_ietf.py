@@ -3,12 +3,12 @@ import pytest
 import json
 
 
-def test_valid_ietf_sig():
+def test_signature_verification():
     # load mock data
     with open("mocks.json", "r") as f:
         mock = json.load(f)["ietf"]
 
-    # verify signature
+    # verify valid signature
     ietf_verify(
         bytes.fromhex(mock["public_key"]),
         bytes.fromhex(mock["data"]),
@@ -16,13 +16,7 @@ def test_valid_ietf_sig():
         bytes.fromhex(mock["valid_signature"]),
     )
 
-
-def test_invalid_ietf_sig():
-    # load mock data
-    with open("mocks.json", "r") as f:
-        mock = json.load(f)["ietf"]
-
-    # verify signature
+    # verify invalid signature
     with pytest.raises(ValueError, match="VRF verification failed"):
         ietf_verify(
             bytes.fromhex(mock["public_key"]),
