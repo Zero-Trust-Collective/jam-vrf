@@ -142,8 +142,9 @@ impl RingVerifier {
 
     try:
         verifier.verify([data, ad, signature], [data, ad, signature])
-    except ValueError:
-        print("batch contains an invalid signature!")
+    except ValueError as e:
+        for batch_index, error in e.args[0].items():
+            print("batch index {} produced error: {}".format(batch_index, error))
     */
     fn verify(&self, batch: Vec<(Vec<u8>, Vec<u8>, Vec<u8>)>) -> PyResult<()> {
         let max_signatures = usize::MAX;
