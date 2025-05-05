@@ -14,3 +14,6 @@ test:
 
 docs:
 	pdoc jam_vrf -o docs
+
+format:
+	uv run ruff format python/
