@@ -55,24 +55,57 @@ pub fn ietf_verify(public_key: &[u8], data: &[u8], ad: &[u8], signature: &[u8]) 
 #[cfg(test)]
 mod tests {
     use super::ietf_verify;
+    use serde;
+    use serde::Deserialize;
+    use serde_json::Value;
+    use serde_with::hex::Hex;
+    use serde_with::serde_as;
+    use std::fs::File;
+    use std::io::BufReader;
+
+    #[serde_as]
+    #[derive(Deserialize)]
+    pub struct IETF {
+        #[serde_as(as = "Hex")]
+        pub public_key: Vec<u8>,
+        #[serde_as(as = "Hex")]
+        pub data: Vec<u8>,
+        #[serde_as(as = "Hex")]
+        pub additional_data: Vec<u8>,
+        #[serde_as(as = "Hex")]
+        pub valid_signature: Vec<u8>,
+        #[serde_as(as = "Hex")]
+        pub invalid_signature: Vec<u8>,
+    }
 
     #[test]
-    fn test_ietf_verify() {
-        // vector 7 from https://github.com/davxy/bandersnatch-vrf-spec/blob/6b1ceba5b3cbc834201732bcdad1377e19e9283e/assets/vectors/bandersnatch_sha-512_ell2_ietf.json#L81
-        let public_key =
-            hex::decode("b0e1f208f9d6e5b310b92014ea7ef3011e649dab038804759f3766e01029d623")
-                .unwrap();
-        let data = hex::decode("42616e646572736e6174636820766563746f72").unwrap();
-        let ad = hex::decode("1f42").unwrap();
-        let signature = hex::decode("6d1dd583bea262323c7dc9e94e57a472e09874e435719010eeafae503c433f166dbeeab9648505fa6a95de52d611acfbb2febacc58cdc7d0ca45abd8c952ef12ce7f4a2354a6c3f97aee6cc60c6aa4c4430b12ed0f0ef304b326c776618d7609")
-                .unwrap();
+    fn test_signature_verification() {
+        // load mock data
+        let file = File::open("mocks.json").unwrap();
+        let reader = BufReader::new(file);
+        let mock_json: Value = serde_json::from_reader(reader).unwrap();
+        let mock: IETF = serde_json::from_value(mock_json["ietf"].clone()).unwrap();
 
         // verify valid signature
-        ietf_verify(&public_key, &data, &ad, &signature)
-            .expect("signature verification should pass");
+        ietf_verify(
+            &mock.public_key,
+            &mock.data,
+            &mock.additional_data,
+            &mock.valid_signature,
+        )
+        .expect("signature verification should pass");
 
-        // verify invalid signature
-        let signature = hex::decode("9508104b820469687488d83f729288d9f70fc0523318beff44a47da10d490b3c4fa53519bd9d17acae4d1021416557d11b84dd4670b563770c14eb98161eaa080f7f9bee9077427f547e69b919cf8d63823c14b20085fd9516768e0f5e3d3f0e").unwrap();
-        assert!(ietf_verify(&public_key, &data, &ad, &signature).is_err());
+        // verify ininvalid signature
+        let result = ietf_verify(
+            &mock.public_key,
+            &mock.data,
+            &mock.additional_data,
+            &mock.invalid_signature,
+        );
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err().to_string(),
+            "ValueError: VRF verification failed"
+        );
     }
 }
