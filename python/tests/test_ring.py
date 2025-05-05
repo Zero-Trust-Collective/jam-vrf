@@ -42,7 +42,7 @@ def test_signature_verification():
     # verify valid signatures
     verifier.verify(signatures)
 
-    # append a few invalid signatures to our batch
+    # verify batch that contains invalid signatures
     signatures.append(
         (
             b"wrong_data",  # data is different from what was signed
@@ -57,8 +57,6 @@ def test_signature_verification():
             bytes.fromhex(mock["signature"]),
         )
     )
-
-    # verify batch that contains invalid signatures
     # signature verification should raise a ValueError
     with pytest.raises(ValueError) as e:
         verifier.verify(signatures)

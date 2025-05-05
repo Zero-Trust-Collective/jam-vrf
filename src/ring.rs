@@ -129,11 +129,10 @@ impl RingVerifier {
     /// Verify a batch of ring signatures
     ///
     /// **Args:**
-    /// -
-    /// - batch: [(data, additional data, signature)] - collection of data & signatures to be verified. All of the tuple fields are python bytes type.
+    /// - batch: [(data, additional_data, signature)] - collection of data & signatures to be verified. All of the tuple fields are python bytes type.
     ///
     /// **Raises:**
-    /// - `ValueError(Dict{index: PyErr})` - a dictionary mapping invalid indexes to validation errors
+    /// - `ValueError(Dict{index: PyErr})` - contains a dictionary mapping invalid indexes to validation errors
     /// - `Exception` - internal error
     ///
     /// **Example:**
@@ -272,13 +271,11 @@ mod tests {
             .verify(batch.clone())
             .expect("signature verification should pass");
 
-        // append a few bad signatures to our batch
+        // verify batch that contains invalid signatures
         batch.push((data.clone(), b"wrong_ad".to_vec(), mock.signature.clone())); // ad is different from what was signed
         batch.push((b"wrong_data".to_vec(), b"".to_vec(), mock.signature.clone())); // data is different from what was signed
-
-        // verify batch that contains invalid signatures
         let result = verifier.verify(batch);
-        // signature verification should raise an error
+        // signature verification should raise a ValueError
         assert!(result.is_err());
         // verify the error contains a dict identifying each of the invalid signatures
         Python::with_gil(|py| {
@@ -290,7 +287,6 @@ mod tests {
                 .get_item(0)
                 .unwrap();
             assert_eq!(invalid_signatures.len().unwrap(), 2);
-
             let invalid_batch_indices = [2, 3];
             for i in invalid_batch_indices {
                 let err = invalid_signatures.get_item(i).unwrap().str().unwrap();
