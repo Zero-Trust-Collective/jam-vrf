@@ -273,7 +273,7 @@ mod tests {
 
         // verify batch that contains invalid signatures
         batch.push((data.clone(), b"wrong_ad".to_vec(), mock.signature.clone())); // ad is different from what was signed
-        batch.push((b"wrong_data".to_vec(), b"".to_vec(), mock.signature.clone())); // data is different from what was signed
+        batch.push((b"wrong_data".to_vec(), vec![], mock.signature.clone())); // data is different from what was signed
         let result = verifier.verify(batch);
         // signature verification should raise a ValueError
         assert!(result.is_err());
