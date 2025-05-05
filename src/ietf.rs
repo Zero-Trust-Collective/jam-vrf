@@ -67,8 +67,12 @@ mod tests {
         let signature = hex::decode("6d1dd583bea262323c7dc9e94e57a472e09874e435719010eeafae503c433f166dbeeab9648505fa6a95de52d611acfbb2febacc58cdc7d0ca45abd8c952ef12ce7f4a2354a6c3f97aee6cc60c6aa4c4430b12ed0f0ef304b326c776618d7609")
                 .unwrap();
 
-        // verify signature
+        // verify valid signature
         ietf_verify(&public_key, &data, &ad, &signature)
             .expect("signature verification should pass");
+
+        // verify invalid signature
+        let signature = hex::decode("9508104b820469687488d83f729288d9f70fc0523318beff44a47da10d490b3c4fa53519bd9d17acae4d1021416557d11b84dd4670b563770c14eb98161eaa080f7f9bee9077427f547e69b919cf8d63823c14b20085fd9516768e0f5e3d3f0e").unwrap();
+        assert!(ietf_verify(&public_key, &data, &ad, &signature).is_err());
     }
 }
