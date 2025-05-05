@@ -126,17 +126,16 @@ except Exception:
     
             <div class="docstring"><p>Verify a batch of ring signatures</p>
 
-<p><strong>Args:</strong>
--</p>
+<p><strong>Args:</strong></p>
 
 <ul>
-<li>batch: [(data, additional data, signature)] - collection of data &amp; signatures to be verified. All of the tuple fields are python bytes type.</li>
+<li>batch: [(data, additional_data, signature)] - collection of data &amp; signatures to be verified. All of the tuple fields are python bytes type.</li>
 </ul>
 
 <p><strong>Raises:</strong></p>
 
 <ul>
-<li><code>ValueError(Dict{index: PyErr})</code> - a dictionary mapping invalid indexes to validation errors</li>
+<li><code>ValueError(Dict{index: PyErr})</code> - contains a dictionary mapping invalid indexes to validation errors</li>
 <li><code>Exception</code> - internal error</li>
 </ul>
 
@@ -146,8 +145,9 @@ except Exception:
 
 try:
     verifier.verify([data, ad, signature], [data, ad, signature])
-except ValueError:
-    print("batch contains an invalid signature!")
+except ValueError as e:
+    for batch_index, error in e.args[0].items():
+        print("batch index {} produced error: {}".format(batch_index, error))
 </code></pre>
 </div>
 
