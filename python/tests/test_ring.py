@@ -39,13 +39,6 @@ def test_valid_ring_sig():
     # construct ring verifier
     verifier = RingVerifier(ring_root, ring_size)
 
-    # verify signature
-    verifier.verify(
-        b"jam_ticket_seal" + entropy + bytes([attempt]),
-        b"",
-        signature
-    )
-
     # verify batch of signatures
     signatures = [
         (
@@ -59,7 +52,7 @@ def test_valid_ring_sig():
             signature
         ),
     ]
-    verifier.verify_batch(signatures)
+    verifier.verify(signatures)
 
 def test_invalid_ring_sig():
     """
@@ -79,16 +72,9 @@ def test_invalid_ring_sig():
     # construct ring verifier
     verifier = RingVerifier(ring_root, ring_size)
 
-    # verify signature
-    with pytest.raises(ValueError, match="VRF verification failed"):
-        verifier.verify(
-            b"jam_ticket_seal" + entropy + bytes([attempt]),
-            b"",
-            signature
-        )
-
     # verify batch of signatures
     # TODO test where only one of the signatures is invalid
+    # TODO augment tests with test specifically for bad output point
     signatures = [
         (
             b"jam_ticket_seal" + entropy + bytes([attempt]),
@@ -102,4 +88,4 @@ def test_invalid_ring_sig():
         )
     ]
     with pytest.raises(ValueError):
-        verifier.verify_batch(signatures)
+        verifier.verify(signatures)
