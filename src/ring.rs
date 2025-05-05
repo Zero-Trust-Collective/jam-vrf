@@ -223,9 +223,7 @@ mod tests {
         pub entropy: Vec<u8>,
         pub ring_size: usize,
         #[serde_as(as = "Hex")]
-        pub valid_signature: Vec<u8>,
-        #[serde_as(as = "Hex")]
-        pub invalid_signature: Vec<u8>,
+        pub signature: Vec<u8>,
     }
 
     #[serde_as]
@@ -272,7 +270,7 @@ mod tests {
         data.push(mock.attempt);
         let mut batch = vec![];
         for _ in 0..2 {
-            batch.push((data.clone(), vec![], mock.valid_signature.clone()));
+            batch.push((data.clone(), vec![], mock.signature.clone()));
         }
 
         // verify valid signatures
@@ -281,13 +279,8 @@ mod tests {
             .expect("signature verification should pass");
 
         // append a few bad signatures to our batch
-        for _ in 0..2 {
-            batch.push((
-                data.clone(),
-                b"bad_ad".to_vec(),
-                mock.invalid_signature.clone(),
-            ));
-        }
+        batch.push((data.clone(), b"wrong_ad".to_vec(), mock.signature.clone())); // ad is different from what was signed
+        batch.push((b"wrong_data".to_vec(), b"".to_vec(), mock.signature.clone())); // data is different from what was signed
 
         // verify batch that contains invalid signatures
         let result = verifier.verify(batch);

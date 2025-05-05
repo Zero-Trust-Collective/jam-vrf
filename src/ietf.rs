@@ -73,9 +73,7 @@ mod tests {
         #[serde_as(as = "Hex")]
         pub additional_data: Vec<u8>,
         #[serde_as(as = "Hex")]
-        pub valid_signature: Vec<u8>,
-        #[serde_as(as = "Hex")]
-        pub invalid_signature: Vec<u8>,
+        pub signature: Vec<u8>,
     }
 
     #[test]
@@ -91,17 +89,25 @@ mod tests {
             &mock.public_key,
             &mock.data,
             &mock.additional_data,
-            &mock.valid_signature,
+            &mock.signature,
         )
         .expect("signature verification should pass");
 
-        // verify ininvalid signature
+        // verify invalid signature (wrong data)
         let result = ietf_verify(
             &mock.public_key,
-            &mock.data,
+            b"wrong_data",
             &mock.additional_data,
-            &mock.invalid_signature,
+            &mock.signature,
         );
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err().to_string(),
+            "ValueError: VRF verification failed"
+        );
+
+        // verify invalid signature (wrong ad)
+        let result = ietf_verify(&mock.public_key, &mock.data, b"wrong_ad", &mock.signature);
         assert!(result.is_err());
         assert_eq!(
             result.unwrap_err().to_string(),

@@ -29,35 +29,32 @@ def test_signature_verification():
     verifier = RingVerifier(bytes.fromhex(mock["root"]), mock["ring_size"])
 
     # generate batch of valid signatures
-    signatures = [
-        (
-            b"jam_ticket_seal" + bytes.fromhex(mock["entropy"]) + bytes([mock["attempt"]]),
-            b"",
-            bytes.fromhex(mock["valid_signature"]),
-        ),
-        (
-            b"jam_ticket_seal" + bytes.fromhex(mock["entropy"]) + bytes([mock["attempt"]]),
-            b"",
-            bytes.fromhex(mock["valid_signature"]),
-        ),
-    ]
+    signatures = []
+    for _ in range(2):
+        signatures.append(
+            (
+                b"jam_ticket_seal" + bytes.fromhex(mock["entropy"]) + bytes([mock["attempt"]]),
+                b"",
+                bytes.fromhex(mock["signature"]),
+            )
+        )
 
     # verify valid signatures
     verifier.verify(signatures)
 
-    # append a few bad signatures to our batch
+    # append a few invalid signatures to our batch
     signatures.append(
         (
-            b"jam_ticket_seal" + bytes.fromhex(mock["entropy"]) + bytes([mock["attempt"]]),
+            b"wrong_data",  # data is different from what was signed
             b"",
-            bytes.fromhex(mock["invalid_signature"]),
+            bytes.fromhex(mock["signature"]),
         )
     )
     signatures.append(
         (
             b"jam_ticket_seal" + bytes.fromhex(mock["entropy"]) + bytes([mock["attempt"]]),
-            b"",
-            bytes.fromhex(mock["invalid_signature"]),
+            b"wrong_ad",  # ad is different from what was signed
+            bytes.fromhex(mock["signature"]),
         )
     )
 
