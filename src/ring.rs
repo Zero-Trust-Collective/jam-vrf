@@ -147,13 +147,6 @@ impl RingVerifier {
             print("batch index {} produced error: {}".format(batch_index, error))
     */
     fn verify(&self, batch: Vec<(Vec<u8>, Vec<u8>, Vec<u8>)>) -> PyResult<()> {
-        let max_signatures = usize::MAX;
-        if batch.len() > max_signatures.into() {
-            return Err(PyValueError::new_err(format!(
-                "Batch cannot contain more than {} items!",
-                max_signatures
-            )));
-        }
         let verification_results: Vec<Result<(), PyErr>> = batch
             .par_iter()
             .map(|(data, ad, signature)| {
