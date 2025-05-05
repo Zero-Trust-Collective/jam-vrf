@@ -130,7 +130,7 @@ impl RingVerifier {
     ///
     /// **Args:**
     /// -
-    /// - batch: [(data, additional data, signature)] - collection of signatures to be verified
+    /// - batch: [(data, additional data, signature)] - collection of data & signatures to be verified. All of the tuple fields are python bytes type.
     ///
     /// **Raises:**
     /// - `ValueError(Dict{index: PyErr})` - a dictionary mapping invalid indexes to validation errors
