@@ -17,13 +17,16 @@ def test_commitment_generation():
     commitment = get_ring_commitment(public_keys)
 
     # verify commitment
-    assert commitment == bytes.fromhex(mock["expected_commitment"])
+    assert commitment.hex() == mock["expected_commitment"]
 
 
 def test_signature_verification():
     # load mock data
     with open("mocks.json", "r") as f:
         mock = json.load(f)["ring"]["safrole_ticket"]
+    data = b"jam_ticket_seal" + bytes.fromhex(mock["entropy"]) + bytes([mock["attempt"]])
+    ad = b""
+    signature = bytes.fromhex(mock["signature"])
 
     # construct ring verifier
     verifier = RingVerifier(bytes.fromhex(mock["root"]), mock["ring_size"])
@@ -31,32 +34,15 @@ def test_signature_verification():
     # generate batch of valid signatures
     signatures = []
     for _ in range(2):
-        signatures.append(
-            (
-                b"jam_ticket_seal" + bytes.fromhex(mock["entropy"]) + bytes([mock["attempt"]]),
-                b"",
-                bytes.fromhex(mock["signature"]),
-            )
-        )
+        signatures.append((data, ad, signature))
 
     # verify valid signatures
     verifier.verify(signatures)
 
     # verify batch that contains invalid signatures
-    signatures.append(
-        (
-            b"wrong_data",  # data is different from what was signed
-            b"",
-            bytes.fromhex(mock["signature"]),
-        )
-    )
-    signatures.append(
-        (
-            b"jam_ticket_seal" + bytes.fromhex(mock["entropy"]) + bytes([mock["attempt"]]),
-            b"wrong_ad",  # ad is different from what was signed
-            bytes.fromhex(mock["signature"]),
-        )
-    )
+    signatures.append((b"wrong_data", ad, signature))
+    signatures.append((data, b"wrong_ad", signature))
+
     # signature verification should raise a ValueError
     with pytest.raises(ValueError) as e:
         verifier.verify(signatures)
