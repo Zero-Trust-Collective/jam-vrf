@@ -246,10 +246,9 @@ mod tests {
         let mock: COMMITMENT =
             serde_json::from_value(mock_json["ring"]["commitment"].clone()).unwrap();
 
-        // generate commitment
+        // generate & verify commitment
         Python::with_gil(|py| {
             let commitment = get_ring_commitment(py, mock.keys).unwrap();
-            // Verify commitment
             assert_eq!(commitment.as_bytes(py), mock.expected_commitment.as_slice());
         });
     }
@@ -269,12 +268,11 @@ mod tests {
         // generate batch of valid signatures
         let mut data = Vec::new();
         data.extend_from_slice(b"jam_ticket_seal");
-        data.extend_from_slice(mock.entropy.as_slice());
+        data.extend(mock.entropy);
         data.push(mock.attempt);
-        let ad = b"";
         let mut batch = vec![];
         for _ in 0..2 {
-            batch.push((data.to_vec(), ad.to_vec(), mock.valid_signature.to_vec()));
+            batch.push((data.clone(), vec![], mock.valid_signature.clone()));
         }
 
         // verify valid signatures
@@ -283,16 +281,13 @@ mod tests {
             .expect("signature verification should pass");
 
         // append a few bad signatures to our batch
-        batch.push((
-            data.to_vec(),
-            b"bad_ad".to_vec(),
-            mock.invalid_signature.to_vec(),
-        ));
-        batch.push((
-            data.to_vec(),
-            b"bad_ad".to_vec(),
-            mock.invalid_signature.to_vec(),
-        ));
+        for _ in 0..2 {
+            batch.push((
+                data.clone(),
+                b"bad_ad".to_vec(),
+                mock.invalid_signature.clone(),
+            ));
+        }
 
         // verify batch that contains invalid signatures
         let result = verifier.verify(batch);
