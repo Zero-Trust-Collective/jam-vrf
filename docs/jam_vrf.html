@@ -118,26 +118,25 @@ except Exception:
                                 <div class="attr function">
             
         <span class="def">def</span>
-        <span class="name">verify</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="o">/</span>, </span><span class="param"><span class="n">data</span>, </span><span class="param"><span class="n">ad</span>, </span><span class="param"><span class="n">signature</span></span><span class="return-annotation">):</span></span>
+        <span class="name">verify</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="o">/</span>, </span><span class="param"><span class="n">batch</span></span><span class="return-annotation">):</span></span>
 
         
     </div>
     <a class="headerlink" href="#RingVerifier.verify"></a>
     
-            <div class="docstring"><p>Verify a ring signature against some data &amp; additional data</p>
+            <div class="docstring"><p>Verify a batch of ring signatures</p>
 
-<p><strong>Args:</strong></p>
+<p><strong>Args:</strong>
+-</p>
 
 <ul>
-<li>data: <code>bytes</code></li>
-<li>ad: <code>bytes</code> - additional data</li>
-<li>signature: <code>bytes</code> - ring signature</li>
+<li>batch: [(data, additional data, signature)] - collection of data &amp; signatures to be verified. All of the tuple fields are python bytes type.</li>
 </ul>
 
 <p><strong>Raises:</strong></p>
 
 <ul>
-<li><code>ValueError</code> - invalid signature</li>
+<li><code>ValueError(Dict{index: PyErr})</code> - a dictionary mapping invalid indexes to validation errors</li>
 <li><code>Exception</code> - internal error</li>
 </ul>
 
@@ -146,9 +145,9 @@ except Exception:
 <pre><code>verifier: RingVerifier
 
 try:
-    verifier.verify(data, ad, signature)
+    verifier.verify([data, ad, signature], [data, ad, signature])
 except ValueError:
-    print("invalid signature!")
+    print("batch contains an invalid signature!")
 </code></pre>
 </div>
 
