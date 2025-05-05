@@ -12,7 +12,7 @@ test:
 	cargo test --no-default-features
 	pytest -n auto
 
-docs:
+docs: develop
 	pdoc jam_vrf -o docs
 
 format:
